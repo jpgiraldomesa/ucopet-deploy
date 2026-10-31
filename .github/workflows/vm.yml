@@ -1,0 +1,31 @@
+name: vm
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Prender o apagar la VM
+        type: choice
+        options: [start, deallocate]
+        default: start
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  vm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: ${{ inputs.action || 'start' }} vm-ucopet
+        run: |
+          az vm ${{ inputs.action || 'start' }} -g rg-ucopet -n vm-ucopet -o none
+          az vm get-instance-view -g rg-ucopet -n vm-ucopet \
+            --query "instanceView.statuses[?starts_with(code,'PowerState')].displayStatus" -o tsv

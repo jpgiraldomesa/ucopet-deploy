@@ -67,6 +67,16 @@ chmod 600 /opt/ucopet/secrets.env
 
 Secretos del repo en GitHub: `VM_HOST`, `VM_USER` y `VM_SSH_KEY`.
 
+## Horario de la VM
+
+La VM esta apagada de 12 am a 6 am (hora de Colombia) para ahorrar creditos.
+
+- **Apagado, 05:00 UTC:** el apagado automatico de Azure (`shutdown-computevm-vm-ucopet`), que libera la VM.
+- **Encendido, 11:00 UTC:** `.github/workflows/vm.yml`, con la app de Entra `ucopet-deploy-github` por OIDC
+  (sin secreto guardado), rol *Virtual Machine Contributor* solo sobre `rg-ucopet`.
+- **El despliegue no corre de 05:00 a 11:30 UTC**, para no fallar por SSH con la VM apagada.
+- **Prenderla o apagarla a mano:** pestaña Actions, workflow `vm`, `Run workflow` con `start` o `deallocate`.
+
 ## Operacion
 
 ```bash
