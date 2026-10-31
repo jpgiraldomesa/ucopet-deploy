@@ -10,6 +10,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: postgres
+    command: ["postgres", "-c", "max_connections=200"]
     logging: *logging
     restart: unless-stopped
     environment:
