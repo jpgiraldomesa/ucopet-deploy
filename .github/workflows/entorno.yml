@@ -1,0 +1,40 @@
+name: entorno
+
+run-name: "${{ inputs.accion }} ${{ inputs.entorno }}: ${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      entorno:
+        description: Entorno
+        type: choice
+        options: [main, develop, pruebas]
+      accion:
+        description: Que hacer
+        type: choice
+        options: [apagar, encender]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: entorno-${{ inputs.entorno }}
+  cancel-in-progress: false
+
+jobs:
+  entorno:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ${{ inputs.accion }} ${{ inputs.entorno }}
+        env:
+          SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM: ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/vm && chmod 600 ~/.ssh/vm
+          printf '%s' "$TOKEN" | ssh -i ~/.ssh/vm -o StrictHostKeyChecking=accept-new "$VM" \
+            "docker login ghcr.io -u '$ACTOR' --password-stdin >/dev/null \
+             && cd /opt/ucopet/deploy && git pull -q --ff-only \
+             && scripts/entorno.sh ${{ inputs.entorno }} ${{ inputs.accion }} '$ACTOR'"

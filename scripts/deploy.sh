@@ -31,6 +31,11 @@ status_job="* * * * * $here/scripts/status.py >/dev/null 2>&1"
 backup_job="50 4 * * * $here/scripts/backup.sh >/dev/null 2>&1"
 { crontab -l 2>/dev/null | grep -vE 'scripts/(status.py|backup.sh)' || true; echo "$status_job"; echo "$backup_job"; } | crontab -
 
+if [ -f "$here/status/apagado-$env" ]; then
+  echo "$env esta apagado a proposito (scripts/entorno.sh $env encender para prenderlo); no se despliega"
+  exit 0
+fi
+
 if [ "$env" = pruebas ] && [ "${CLEAN:-false}" = true ]; then
   docker compose -f "$here/app/compose.yml" down
   docker exec postgres dropdb -U ucopet --if-exists --force ucopet_pruebas

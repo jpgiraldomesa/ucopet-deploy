@@ -87,13 +87,25 @@ Si ya existe la imagen de ese commit (de develop, de main o de otra prueba) se r
 Si una rama no existe, no se toca nada y el resumen de la ejecucion lo dice. Es uno solo: el ultimo que lo
 lanza lo ocupa. Solo construye lo que esta subido a GitHub.
 
+## Apagar o prender un entorno
+
+Pestaña Actions, workflow **entorno**, `Run workflow`: elegir `main`, `develop` o `pruebas` y `apagar` o `encender`.
+
+- **Apagar** detiene sus siete contenedores y deja la marca `status/apagado-<entorno>`: el despliegue lo salta y
+  la pagina de estado lo muestra apagado. La base y el vhost quedan intactos.
+- **Encender** quita la marca y lo despliega con lo ultimo de su rama.
+
+No se hace desde la pagina de estado porque es publica y sin login: cualquiera con el enlace podria apagarlo.
+
 ## Horario de la VM
 
 La VM esta apagada de 12 am a 6 am (hora de Colombia) para ahorrar creditos.
 
 - **Apagado, 05:00 UTC:** el apagado automatico de Azure (`shutdown-computevm-vm-ucopet`), que libera la VM.
-- **Encendido, 11:00 UTC:** `.github/workflows/vm.yml`, con la app de Entra `ucopet-deploy-github` por OIDC
-  (sin secreto guardado), rol *Virtual Machine Contributor* solo sobre `rg-ucopet`.
+- **Encendido:** a mano (Actions, workflow `vm`, `start`, o `az vm start -g rg-ucopet -n vm-ucopet`).
+  `.github/workflows/vm.yml` lo intenta a las 11:00 UTC con la app de Entra `ucopet-deploy-github` por OIDC
+  (sin secreto guardado, rol *Virtual Machine Contributor* solo sobre `rg-ucopet`), pero el cron de GitHub
+  llega con horas de atraso: no hay que contar con el.
 - **El despliegue no corre de 05:00 a 11:30 UTC**, para no fallar por SSH con la VM apagada.
 - **Prenderla o apagarla a mano:** pestaña Actions, workflow `vm`, `Run workflow` con `start` o `deallocate`.
 

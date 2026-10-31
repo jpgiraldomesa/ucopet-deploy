@@ -138,6 +138,11 @@ def main():
             "services": services,
             "queues": env_queues,
         }
+        try:
+            with open(os.path.join(HERE, "status", f"apagado-{env}")) as f:
+                envs[env]["off"] = json.load(f)
+        except (OSError, ValueError):
+            envs[env]["off"] = None
         if env == "pruebas":
             try:
                 with open(PRUEBAS_META) as f:

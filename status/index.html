@@ -99,6 +99,7 @@
   let data = null;
   const ENVS = ["develop", "main", "pruebas"];
   const FORM = "https://github.com/jpgiraldomesa/ucopet-deploy/actions/workflows/probar.yml";
+  const ENTORNO = "https://github.com/jpgiraldomesa/ucopet-deploy/actions/workflows/entorno.yml";
   let env = ENVS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "develop";
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -115,6 +116,7 @@
   function state(s) {
     if (s.status === "missing") return ["off", "Sin imagen"];
     if (s.status === "restarting") return ["bad", "Se reinicia"];
+    if (s.status === "exited" && data?.envs?.[env]?.off) return ["off", "Apagado"];
     if (s.status !== "running") return ["off", "Detenido"];
     const young = (Date.now() - new Date(s.started_at)) / 1000 < 60;
     if (young && s.restarts > 0) return ["bad", "Se reinicia"];
@@ -172,7 +174,10 @@
       return `<span class="pill ${ok ? "ok" : "bad"}">${esc(i.name)}</span>`;
     }).join(" ");
     const meta = env === "pruebas" ? e.meta : null;
-    document.getElementById("banner").innerHTML = env !== "pruebas" ? ""
+    document.getElementById("banner").innerHTML = e.off
+      ? `<div class="banner"><b>${esc(env)} está apagado a propósito</b>, por ${esc(e.off.by)} hace ${ago(e.off.at)}.
+         El despliegue lo salta hasta que se prenda: <a href="${ENTORNO}">Actions → entorno</a>, acción encender.</div>`
+      : env !== "pruebas" ? ""
       : meta
         ? `<div class="banner">Cargado por <b>${esc(meta.by)}</b> hace ${ago(meta.at)}${meta.clean ? " con base limpia" : ""}.
            Para cargar tus ramas: <a href="${FORM}">Actions → probar ramas</a>.</div>`
