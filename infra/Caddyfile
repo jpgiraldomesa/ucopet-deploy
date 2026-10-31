@@ -1,11 +1,26 @@
+(estado) {
+	redir /estado /estado/ 308
+	handle_path /estado/* {
+		root * /srv/estado
+		header /estado.json Cache-Control "no-store"
+		file_server
+	}
+}
+
 {$DOMAIN} {
 	encode gzip
-	reverse_proxy ucopet-main-front:80
+	import estado
+	handle {
+		reverse_proxy ucopet-main-front:80
+	}
 }
 
 {$DOMAIN}:8443 {
 	encode gzip
-	reverse_proxy ucopet-develop-front:80
+	import estado
+	handle {
+		reverse_proxy ucopet-develop-front:80
+	}
 }
 
 {$DOMAIN}:15671 {

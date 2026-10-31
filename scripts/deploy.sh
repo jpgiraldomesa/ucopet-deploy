@@ -16,7 +16,12 @@ else
   export JWT_SECRET="$JWT_SECRET_DEVELOP" PUBLIC_URL="https://$DOMAIN:8443"
 fi
 
+mkdir -p "$here/status"
 docker compose -f "$here/infra/compose.yml" --env-file "$secrets" up -d --wait
+docker exec caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
+
+status_job="* * * * * $here/scripts/status.py >/dev/null 2>&1"
+(crontab -l 2>/dev/null | grep -v 'scripts/status.py'; echo "$status_job") | crontab -
 
 if ! docker exec postgres psql -U ucopet -d postgres -tAc "select 1 from pg_database where datname='ucopet_$env'" | grep -q 1; then
   docker exec postgres createdb -U ucopet "ucopet_$env"
@@ -54,3 +59,5 @@ docker compose -f "$here/app/compose.yml" up -d --remove-orphans $ready
 docker image prune -f >/dev/null
 
 "$here/scripts/seed.sh" "$env"
+
+"$here/scripts/status.py" || true

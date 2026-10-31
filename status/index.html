@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UcoPet · Estado</title>
+<style>
+  :root {
+    --bg: #f5f7fb; --card: #ffffff; --ink: #152046; --muted: #5b6785; --line: #e3e8f2;
+    --ok: #138a5b; --ok-bg: #e3f5ec; --bad: #c0392b; --bad-bg: #fbe7e4;
+    --warn: #a86a00; --warn-bg: #fdf1dc; --off: #6b7488; --off-bg: #eceff4; --accent: #2f6bf0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1426; --card: #161e36; --ink: #e8ecf7; --muted: #9aa6c4; --line: #26304d;
+      --ok: #4fd39a; --ok-bg: #133628; --bad: #ff8a7a; --bad-bg: #3a1c1a;
+      --warn: #f2bd5c; --warn-bg: #3a2c12; --off: #a0a8bb; --off-bg: #232b44; --accent: #7aa2ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  h1 { font-size: 22px; margin: 0; }
+  h1 span { color: var(--accent); }
+  .updated { color: var(--muted); font-size: 13px; }
+  .updated.stale { color: var(--bad); font-weight: 600; }
+  .intro { color: var(--muted); margin: 8px 0 20px; max-width: 70ch; }
+  .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .tabs { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .tabs button { border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600;
+                 padding: 6px 14px; border-radius: 7px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--accent); color: #fff; }
+  .links { display: flex; gap: 14px; font-size: 14px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .infra { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; font-size: 13px; color: var(--muted); align-items: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .card h3 { margin: 0; font-size: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 2px; }
+  .meta { margin-top: 10px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .ok { color: var(--ok); background: var(--ok-bg); }
+  .bad { color: var(--bad); background: var(--bad-bg); }
+  .warn { color: var(--warn); background: var(--warn-bg); }
+  .off { color: var(--off); background: var(--off-bg); }
+  h2 { font-size: 17px; margin: 28px 0 10px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
+  summary { cursor: pointer; padding: 10px 14px; display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
+  summary span { font-weight: 400; color: var(--muted); font-size: 13px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 14px; border-top: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  td.q { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .error { background: var(--bad-bg); color: var(--bad); padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; }
+  footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Uco<span>Pet</span> · Estado</h1>
+    <div class="updated" id="updated">Cargando…</div>
+  </header>
+  <p class="intro">Los procesadores no tienen pantalla: escuchan colas de RabbitMQ y escriben en la base.
+    Aquí se ve si cada pieza está arriba, qué commit está corriendo y qué colas tiene escuchando cada procesador.
+    Se actualiza cada minuto.</p>
+
+  <div class="bar">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-env="develop">develop</button>
+      <button role="tab" data-env="main">main</button>
+    </div>
+    <div class="links" id="links"></div>
+  </div>
+  <div id="error"></div>
+  <div class="infra" id="infra"></div>
+  <div class="grid" id="services"></div>
+  <h2>Colas por procesador</h2>
+  <div id="queues"></div>
+  <footer>Lo arma <code>scripts/status.py</code> en la VM, desde
+    <a href="https://github.com/jpgiraldomesa/ucopet-deploy">jpgiraldomesa/ucopet-deploy</a>.
+    La VM se apaga de 12 a 6 am (hora de Colombia).</footer>
+</main>
+<script>
+  const ORDER = ["commercial", "health", "payment", "user", "inventory"];
+  const NAMES = { api: "API", front: "Front", commercial: "Comercial", health: "Salud",
+                  payment: "Pagos", user: "Usuarios", inventory: "Inventario" };
+  let data = null;
+  let env = (location.hash.slice(1) === "main") ? "main" : "develop";
+
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function ago(iso) {
+    if (!iso) return "";
+    const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+    if (s < 60) return `${Math.round(s)} s`;
+    if (s < 3600) return `${Math.round(s / 60)} min`;
+    if (s < 86400) return `${Math.round(s / 3600)} h`;
+    return `${Math.round(s / 86400)} d`;
+  }
+
+  function state(s) {
+    if (s.status === "missing") return ["off", "Sin imagen"];
+    if (s.status === "restarting") return ["bad", "Se reinicia"];
+    if (s.status !== "running") return ["off", "Detenido"];
+    const young = (Date.now() - new Date(s.started_at)) / 1000 < 60;
+    if (young && s.restarts > 0) return ["bad", "Se reinicia"];
+    if (young) return ["warn", "Arrancando"];
+    return ["ok", "Arriba"];
+  }
+
+  function card(s, queues) {
+    const [cls, label] = state(s);
+    const lines = [];
+    if (s.revision && s.repo) {
+      lines.push(`Commit <a href="https://github.com/${esc(s.repo)}/commit/${esc(s.revision)}">${esc(s.revision.slice(0, 7))}</a> · ${esc(s.repo.split("/")[1])}`);
+    }
+    if (s.status === "missing") lines.push("Su rama no compila todavía");
+    if (s.status === "running" && cls === "ok") lines.push(`Arriba hace <b>${ago(s.started_at)}</b>`);
+    if (s.restarts > 0) lines.push(`Reinicios: <b>${s.restarts}</b>`);
+    if (s.kind === "processor") {
+      const own = queues.filter(q => q.owner === s.svc);
+      const heard = own.filter(q => q.listeners.includes(s.svc)).length;
+      lines.push(own.length ? `Escucha <b>${heard} de ${own.length}</b> colas` : "Sin colas en este entorno");
+    }
+    const kind = { api: "API", front: "Front", processor: "Procesador" }[s.kind];
+    return `<div class="card"><h3>${esc(s.label)} <span class="pill ${cls}">${label}</span></h3>
+      <div class="kind">${kind}</div><div class="meta">${lines.map(l => `<div>${l}</div>`).join("")}</div></div>`;
+  }
+
+  function queueGroup(owner, list) {
+    const heard = list.filter(q => q.listeners.length).length;
+    const pending = list.reduce((n, q) => n + q.messages, 0);
+    const rows = list.map(q => `<tr><td class="q">${esc(q.name)}</td>
+      <td>${q.listeners.length ? `<span class="pill ok">${esc(q.listeners.map(l => NAMES[l] || l).join(", "))}</span>`
+                               : `<span class="pill off">nadie</span>`}</td>
+      <td class="n">${q.messages}</td></tr>`).join("");
+    return `<details${heard < list.length ? " open" : ""}>
+      <summary>${esc(NAMES[owner] || "Sin dueño claro")} <span>${heard} de ${list.length} escuchadas${pending ? ` · ${pending} mensajes en espera` : ""}</span></summary>
+      <div class="table-wrap"><table><thead><tr><th>Cola</th><th>La escucha</th><th class="n">En espera</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></details>`;
+  }
+
+  function render() {
+    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.env === env));
+    if (!data) return;
+    const e = data.envs[env];
+    const age = (Date.now() - new Date(data.generated_at)) / 1000;
+    const up = document.getElementById("updated");
+    up.textContent = `Actualizado hace ${ago(data.generated_at)}`;
+    up.classList.toggle("stale", age > 180);
+    document.getElementById("error").innerHTML = data.rabbit_error
+      ? `<div class="error">No se pudo leer RabbitMQ: ${esc(data.rabbit_error)}</div>` : "";
+    document.getElementById("links").innerHTML =
+      `<a href="${esc(e.url)}">Abrir ${env}</a><a href="${esc(e.url.replace(/:\d+$/, ""))}:15671/#/queues">Consola de Rabbit</a>`;
+    document.getElementById("infra").innerHTML = "Compartido: " + data.infra.map(i => {
+      const ok = i.status === "running" && (!i.health || i.health === "healthy");
+      return `<span class="pill ${ok ? "ok" : "bad"}">${esc(i.name)}</span>`;
+    }).join(" ");
+    document.getElementById("services").innerHTML = e.services.map(s => card(s, e.queues)).join("");
+    const groups = {};
+    e.queues.forEach(q => (groups[q.owner || "?"] ??= []).push(q));
+    const keys = [...ORDER.filter(k => groups[k]), ...Object.keys(groups).filter(k => !ORDER.includes(k))];
+    document.getElementById("queues").innerHTML = keys.length
+      ? keys.map(k => queueGroup(k, groups[k])).join("")
+      : `<p class="intro">Este entorno todavía no tiene colas.</p>`;
+  }
+
+  async function load() {
+    try {
+      const r = await fetch("estado.json", { cache: "no-store" });
+      data = await r.json();
+    } catch (err) {
+      document.getElementById("updated").textContent = "No se pudo cargar el estado";
+    }
+    render();
+  }
+
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+    env = b.dataset.env; history.replaceState(null, "", "#" + env); render();
+  }));
+  load();
+  setInterval(load, 30000);
+  setInterval(render, 10000);
+</script>
+</body>
+</html>

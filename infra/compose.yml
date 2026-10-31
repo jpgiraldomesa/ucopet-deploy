@@ -47,7 +47,8 @@ services:
       - "8443:8443"
       - "15671:15671"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - .:/etc/caddy:ro
+      - ../status:/srv/estado:ro
       - caddy_data:/data
       - caddy_config:/config
     mem_limit: 128m

@@ -9,6 +9,11 @@ Dockerfile y la configuracion viven aqui.
 | main | `main` de cada repo | `https://<dominio>` |
 | develop | `develop` de cada repo | `https://<dominio>:8443` |
 | Rabbit (consola) | | `https://<dominio>:15671` |
+| Estado | | `https://<dominio>/estado/` |
+
+La pagina de estado muestra, por entorno, si cada pieza esta arriba, que commit corre y que colas
+escucha cada procesador (que no tienen pantalla). La arma `scripts/status.py` cada minuto por cron
+en la VM; escribe `status/estado.json` y Caddy lo sirve. No expone Docker ni la clave de Rabbit.
 
 ## Como funciona
 
