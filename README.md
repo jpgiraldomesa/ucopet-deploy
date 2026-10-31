@@ -52,6 +52,7 @@ asi que llega un solo aviso por commit roto. El resumen de la ejecucion dice cua
 | `infra/compose.yml` | lo compartido: Postgres, RabbitMQ y Caddy (HTTPS automatico) |
 | `app/compose.yml` | un entorno: la API, los cinco procesadores y el front |
 | `infra/rabbit-topology.json` | colas que ningun procesador declara solo (Salud), se importan en cada vhost |
+| `scripts/topology.py` | lee los `.properties` del jar de Salud y declara sus colas, asi una cola nueva no lo tumba |
 | `seed/` | sedes, catalogo y cuentas del equipo; se puede correr las veces que sea |
 
 Cada entorno tiene su propia base (`ucopet_main`, `ucopet_develop`) y su propio vhost de Rabbit.

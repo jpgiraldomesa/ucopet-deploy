@@ -56,6 +56,7 @@ sed "s#\"vhost\": *\"/\"#\"vhost\": \"$env\"#g" "$here/infra/rabbit-topology.jso
 docker exec rabbit rabbitmqctl -q import_definitions "/tmp/topology-$env.json" >/dev/null
 
 docker compose -f "$here/app/compose.yml" pull -q --ignore-pull-failures
+"$here/scripts/topology.py" "$env" || echo "topologia $env: no se pudo declarar, sigo igual"
 ready=""
 for svc in $(docker compose -f "$here/app/compose.yml" config --services); do
   if docker image inspect "$REGISTRY/ucopet-$svc:$env" >/dev/null 2>&1; then
