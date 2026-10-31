@@ -19,7 +19,9 @@ Dockerfile y la configuracion viven aqui.
 3. Entra a la VM por SSH y corre `scripts/deploy.sh <rama>`, que baja las imagenes nuevas,
    arranca la API primero (crea las tablas) y despues el resto, y carga la semilla.
 
-Si una rama no compila, ese servicio se queda con la imagen anterior y los demas siguen.
+Si una rama no compila, ese servicio se queda con la imagen anterior y los demas siguen. El commit
+roto queda marcado en GHCR (`:failed-<rama>-<commit>`) y no se reintenta hasta el proximo commit,
+asi que llega un solo aviso por commit roto. El resumen de la ejecucion dice cual fue.
 
 | Repo | Servicio |
 |---|---|

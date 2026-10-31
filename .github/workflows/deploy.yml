@@ -85,6 +85,12 @@ jobs:
             ucopet.repo=${{ matrix.repo }}
           cache-from: type=gha,scope=${{ matrix.svc }}-${{ matrix.env }}
           cache-to: type=gha,scope=${{ matrix.svc }}-${{ matrix.env }},mode=max
+      - name: Marcar el commit como roto
+        if: failure()
+        run: |
+          printf 'FROM scratch\nLABEL ucopet.repo=%s ucopet.revision=%s\n' "${{ matrix.repo }}" "${{ matrix.sha }}" \
+            | docker buildx build --push -t "${{ env.REGISTRY }}/ucopet-${{ matrix.svc }}:failed-${{ matrix.tag }}" -
+          echo "**${{ matrix.svc }} (${{ matrix.env }})** no compila en ${{ matrix.repo }}@${{ matrix.sha }}" >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     needs: [detect, build]

@@ -18,6 +18,10 @@ while read -r svc repo; do
       echo "al dia   $svc:$env ($tag)"
       continue
     fi
+    if [ "$force" != true ] && docker manifest inspect "$registry/ucopet-$svc:failed-$tag" >/dev/null 2>&1; then
+      echo "fallo    $svc:$env ($tag) no compila; se reintenta con el proximo commit"
+      continue
+    fi
     echo "cambio   $svc:$env ($tag)"
     items+=("{\"svc\":\"$svc\",\"repo\":\"$repo\",\"env\":\"$env\",\"sha\":\"$sha\",\"tag\":\"$tag\"}")
     envs+=("\"$env\"")
