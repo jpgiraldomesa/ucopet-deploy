@@ -18,8 +18,11 @@ en la VM; escribe `status/estado.json` y Caddy lo sirve. No expone Docker ni la 
 
 ## Como funciona
 
-1. Cada 15 minutos, GitHub Actions (`.github/workflows/deploy.yml`) mira el ultimo commit de `main`
-   y `develop` en cada repo de `services.txt`.
+1. Cada 5 minutos, la VM (`scripts/watch.sh`, por cron) mira el ultimo commit de `main` y `develop` en
+   cada repo de `services.txt`. Si alguno cambio, lanza el workflow `deploy`
+   (`.github/workflows/deploy.yml`). No se usa el `schedule` de GitHub: llegaba con horas de atraso.
+   Necesita `GH_DISPATCH_TOKEN` en `/opt/ucopet/secrets.env` (token fino, solo `ucopet-deploy`,
+   permiso *Actions: read and write*). Lo que lanzo queda en `/opt/ucopet/watch.log`.
 2. Si la imagen de ese commit no existe en GHCR, la construye y la sube con dos etiquetas:
    `:<rama>` y `:<rama>-<commit>`.
 3. Entra a la VM por SSH y corre `scripts/deploy.sh <rama>`, que baja las imagenes nuevas,

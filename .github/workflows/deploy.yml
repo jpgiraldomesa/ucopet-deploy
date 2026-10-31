@@ -1,9 +1,6 @@
 name: deploy
 
 on:
-  schedule:
-    - cron: "*/15 0-4,12-23 * * *"
-    - cron: "30,45 11 * * *"
   push:
     branches: [main]
   workflow_dispatch:
@@ -12,6 +9,10 @@ on:
         description: Reconstruir todas las imagenes aunque no haya commits nuevos
         type: boolean
         default: false
+      todos:
+        description: Redesplegar los dos entornos aunque no haya cambios
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -44,7 +45,7 @@ jobs:
         env:
           FORCE_INPUT: ${{ inputs.force }}
           BEFORE: ${{ github.event.before }}
-          DEPLOY_ALL: ${{ github.event_name != 'schedule' }}
+          DEPLOY_ALL: ${{ github.event_name == 'push' || inputs.todos }}
         run: |
           FORCE=false
           [ "$FORCE_INPUT" = true ] && FORCE=true
