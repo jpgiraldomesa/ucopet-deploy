@@ -8,6 +8,7 @@ Dockerfile y la configuracion viven aqui.
 |---|---|---|
 | main | `main` de cada repo | `https://<dominio>` |
 | develop | `develop` de cada repo | `https://<dominio>:8443` |
+| pruebas | las ramas que alguien elija | `https://<dominio>:9443` |
 | Rabbit (consola) | | `https://<dominio>:15671` |
 | Estado | | `https://<dominio>/estado/` |
 
@@ -71,6 +72,20 @@ chmod 600 /opt/ucopet/secrets.env
 ```
 
 Secretos del repo en GitHub: `VM_HOST`, `VM_USER` y `VM_SSH_KEY`.
+
+## Probar una rama (entorno pruebas)
+
+Un entorno compartido para ver una rama `feature_*` junto a lo demas antes de hacer merge.
+
+1. Pestaña Actions, workflow **probar ramas**, `Run workflow`.
+2. Poner la rama en cada repo que se quiera cambiar; lo que se deje en `develop` queda como en develop.
+   Marcar *Base limpia* para borrar los datos de pruebas y volver a sembrar.
+3. En unos minutos queda en `https://<dominio>:9443`. La pagina de estado (pestaña *pruebas*) dice quien lo
+   cargo, cuando y que rama tiene cada pieza.
+
+Si ya existe la imagen de ese commit (de develop, de main o de otra prueba) se reusa; si no, se construye.
+Si una rama no existe, no se toca nada y el resumen de la ejecucion lo dice. Es uno solo: el ultimo que lo
+lanza lo ocupa. Solo construye lo que esta subido a GitHub.
 
 ## Horario de la VM
 

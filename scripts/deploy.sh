@@ -1,20 +1,27 @@
 #!/bin/sh
 # Corre en la VM. Levanta la infraestructura compartida y actualiza un entorno.
-# Uso: scripts/deploy.sh <main|develop>
+# Uso: scripts/deploy.sh <main|develop|pruebas>
 # Lee los secretos de /opt/ucopet/secrets.env (no esta en el repo).
+# Para pruebas: CLEAN=true borra su base y su vhost antes, y PRUEBAS_META (JSON en base64)
+# dice quien lo cargo y con que ramas; queda en status/pruebas.json para la pagina de estado.
 set -e
 env=$1
-case "$env" in main|develop) ;; *) echo "uso: $0 <main|develop>"; exit 1 ;; esac
+case "$env" in
+  main) port="" ;;
+  develop) port=":8443" ;;
+  pruebas) port=":9443" ;;
+  *) echo "uso: $0 <main|develop|pruebas>"; exit 1 ;;
+esac
 
 here=$(cd "$(dirname "$0")/.." && pwd)
 secrets=${SECRETS:-/opt/ucopet/secrets.env}
+jwt_var="JWT_SECRET_$(echo "$env" | tr a-z A-Z)"
+if ! grep -q "^$jwt_var=" "$secrets"; then
+  echo "$jwt_var=$(openssl rand -base64 64 | tr -d '/+=\n' | cut -c1-64)" >> "$secrets"
+fi
 set -a; . "$secrets"; set +a
 export ENV="$env" REGISTRY="${REGISTRY:-ghcr.io/jpgiraldomesa}"
-if [ "$env" = main ]; then
-  export JWT_SECRET="$JWT_SECRET_MAIN" PUBLIC_URL="https://$DOMAIN"
-else
-  export JWT_SECRET="$JWT_SECRET_DEVELOP" PUBLIC_URL="https://$DOMAIN:8443"
-fi
+export JWT_SECRET="$(eval echo "\$$jwt_var")" PUBLIC_URL="https://$DOMAIN$port"
 
 mkdir -p "$here/status"
 docker compose -f "$here/infra/compose.yml" --env-file "$secrets" up -d --wait
@@ -23,6 +30,12 @@ docker exec caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || 
 status_job="* * * * * $here/scripts/status.py >/dev/null 2>&1"
 backup_job="50 4 * * * $here/scripts/backup.sh >/dev/null 2>&1"
 { crontab -l 2>/dev/null | grep -vE 'scripts/(status.py|backup.sh)' || true; echo "$status_job"; echo "$backup_job"; } | crontab -
+
+if [ "$env" = pruebas ] && [ "${CLEAN:-false}" = true ]; then
+  docker compose -f "$here/app/compose.yml" down
+  docker exec postgres dropdb -U ucopet --if-exists --force ucopet_pruebas
+  docker exec rabbit rabbitmqctl -q delete_vhost pruebas 2>/dev/null || true
+fi
 
 if ! docker exec postgres psql -U ucopet -d postgres -tAc "select 1 from pg_database where datname='ucopet_$env'" | grep -q 1; then
   docker exec postgres createdb -U ucopet "ucopet_$env"
@@ -60,5 +73,9 @@ docker compose -f "$here/app/compose.yml" up -d --remove-orphans $ready
 docker image prune -f >/dev/null
 
 "$here/scripts/seed.sh" "$env"
+
+if [ "$env" = pruebas ] && [ -n "${PRUEBAS_META:-}" ]; then
+  echo "$PRUEBAS_META" | base64 -d > "$here/status/pruebas.json"
+fi
 
 "$here/scripts/status.py" || true

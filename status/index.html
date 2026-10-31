@@ -58,6 +58,9 @@
   td.q { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
   td.n { text-align: right; font-variant-numeric: tabular-nums; }
   .error { background: var(--bad-bg); color: var(--bad); padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; }
+  .banner { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+            border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
+  .banner b { font-weight: 600; }
   footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
 </style>
 </head>
@@ -75,10 +78,12 @@
     <div class="tabs" role="tablist">
       <button role="tab" data-env="develop">develop</button>
       <button role="tab" data-env="main">main</button>
+      <button role="tab" data-env="pruebas">pruebas</button>
     </div>
     <div class="links" id="links"></div>
   </div>
   <div id="error"></div>
+  <div id="banner"></div>
   <div class="infra" id="infra"></div>
   <div class="grid" id="services"></div>
   <h2>Colas por procesador</h2>
@@ -92,7 +97,9 @@
   const NAMES = { api: "API", front: "Front", commercial: "Comercial", health: "Salud",
                   payment: "Pagos", user: "Usuarios", inventory: "Inventario" };
   let data = null;
-  let env = (location.hash.slice(1) === "main") ? "main" : "develop";
+  const ENVS = ["develop", "main", "pruebas"];
+  const FORM = "https://github.com/jpgiraldomesa/ucopet-deploy/actions/workflows/probar.yml";
+  let env = ENVS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "develop";
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -115,9 +122,10 @@
     return ["ok", "Arriba"];
   }
 
-  function card(s, queues) {
+  function card(s, queues, branch) {
     const [cls, label] = state(s);
     const lines = [];
+    if (branch) lines.push(`Rama <b>${esc(branch)}</b>`);
     if (s.revision && s.repo) {
       lines.push(`Commit <a href="https://github.com/${esc(s.repo)}/commit/${esc(s.revision)}">${esc(s.revision.slice(0, 7))}</a> · ${esc(s.repo.split("/")[1])}`);
     }
@@ -163,7 +171,15 @@
       const ok = i.status === "running" && (!i.health || i.health === "healthy");
       return `<span class="pill ${ok ? "ok" : "bad"}">${esc(i.name)}</span>`;
     }).join(" ");
-    document.getElementById("services").innerHTML = e.services.map(s => card(s, e.queues)).join("");
+    const meta = env === "pruebas" ? e.meta : null;
+    document.getElementById("banner").innerHTML = env !== "pruebas" ? ""
+      : meta
+        ? `<div class="banner">Cargado por <b>${esc(meta.by)}</b> hace ${ago(meta.at)}${meta.clean ? " con base limpia" : ""}.
+           Para cargar tus ramas: <a href="${FORM}">Actions → probar ramas</a>.</div>`
+        : `<div class="banner">Nadie ha cargado ramas todavía. Se cargan desde
+           <a href="${FORM}">Actions → probar ramas</a>.</div>`;
+    document.getElementById("services").innerHTML = e.services
+      .map(s => card(s, e.queues, meta?.branches?.[s.svc]?.branch)).join("");
     const groups = {};
     e.queues.forEach(q => (groups[q.owner || "?"] ??= []).push(q));
     const keys = [...ORDER.filter(k => groups[k]), ...Object.keys(groups).filter(k => !ORDER.includes(k))];

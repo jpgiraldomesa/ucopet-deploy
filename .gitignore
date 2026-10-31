@@ -1,3 +1,4 @@
 secrets.env
 *.log
 status/estado.json*
+status/pruebas.json

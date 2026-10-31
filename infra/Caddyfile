@@ -23,6 +23,14 @@
 	}
 }
 
+{$DOMAIN}:9443 {
+	encode gzip
+	import estado
+	handle {
+		reverse_proxy ucopet-pruebas-front:80
+	}
+}
+
 {$DOMAIN}:15671 {
 	reverse_proxy rabbit:15672
 }

@@ -13,7 +13,8 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRETS = os.environ.get("SECRETS", "/opt/ucopet/secrets.env")
 OUT = os.path.join(HERE, "status", "estado.json")
 
-ENVS = ["main", "develop"]
+ENVS = {"main": "", "develop": ":8443", "pruebas": ":9443"}
+PRUEBAS_META = os.path.join(HERE, "status", "pruebas.json")
 SERVICES = [
     ("api", "API", "api"),
     ("front", "Front", "front"),
@@ -116,7 +117,7 @@ def main():
             listeners.setdefault(key, set()).add(container)
 
     envs = {}
-    for env in ENVS:
+    for env, port in ENVS.items():
         prefix = f"ucopet-{env}-"
         env_queues = []
         for q in sorted((q for q in queues if q["vhost"] == env), key=lambda q: q["name"]):
@@ -133,10 +134,16 @@ def main():
             c = cs.get(prefix + svc)
             services.append({"svc": svc, "label": label, "kind": kind, **(c or {"status": "missing"})})
         envs[env] = {
-            "url": f"https://{s['DOMAIN']}" + ("" if env == "main" else ":8443"),
+            "url": f"https://{s['DOMAIN']}{port}",
             "services": services,
             "queues": env_queues,
         }
+        if env == "pruebas":
+            try:
+                with open(PRUEBAS_META) as f:
+                    envs[env]["meta"] = json.load(f)
+            except (OSError, ValueError):
+                envs[env]["meta"] = None
 
     infra = [{"name": n, **{k: cs[n][k] for k in ("status", "health", "restarts", "started_at")}}
              for n in ("postgres", "rabbit", "caddy") if n in cs]

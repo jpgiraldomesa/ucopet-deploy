@@ -1,0 +1,138 @@
+name: probar ramas
+
+run-name: "pruebas: ${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      api:
+        description: Rama de cristopherr26/ucopetapi
+        default: develop
+      front:
+        description: Rama de cristopherr26/Front-End-UcoPetApi
+        default: develop
+      commercial:
+        description: Rama de MontoyaVJuli/ucopet-commercial-processor
+        default: develop
+      health:
+        description: Rama de Michelgdr28/ucopet-health-processor
+        default: develop
+      payment:
+        description: Rama de juliananaranjo/ucopet-payment-processor
+        default: develop
+      user:
+        description: Rama de simongrisales/ucopet-user-processor
+        default: develop
+      inventory:
+        description: Rama de jpgiraldomesa/ucopet-inventory-processor
+        default: develop
+      limpia:
+        description: Base limpia (borra los datos de pruebas y vuelve a sembrar)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: pruebas
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io/jpgiraldomesa
+  DOMAIN: ucopet.westus2.cloudapp.azure.com
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      builds: ${{ steps.resolve.outputs.builds }}
+      meta: ${{ steps.resolve.outputs.meta }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: resolve
+        env:
+          BRANCHES: ${{ toJson(inputs) }}
+          ACTOR: ${{ github.actor }}
+          CLEAN: ${{ inputs.limpia }}
+        run: scripts/resolve-pruebas.sh
+
+  build:
+    needs: resolve
+    if: needs.resolve.outputs.builds != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve.outputs.matrix) }}
+    name: ${{ matrix.svc }} (${{ matrix.branch }})
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: deploy
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ matrix.sha }}
+          path: src
+      - id: node
+        if: matrix.svc == 'front'
+        run: echo "version=$(deploy/scripts/node-version.sh src)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: src
+          file: deploy/docker/${{ matrix.svc == 'front' && 'front' || 'spring' }}.Dockerfile
+          build-contexts: config=deploy/docker
+          build-args: NODE_VERSION=${{ steps.node.outputs.version || '24' }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/ucopet-${{ matrix.svc }}:pruebas
+            ${{ env.REGISTRY }}/ucopet-${{ matrix.svc }}:sha-${{ matrix.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ matrix.sha }}
+            ucopet.repo=${{ matrix.repo }}
+            ucopet.branch=${{ matrix.branch }}
+          cache-from: type=gha,scope=${{ matrix.svc }}-pruebas
+          cache-to: type=gha,scope=${{ matrix.svc }}-pruebas,mode=max
+
+  deploy:
+    needs: [resolve, build]
+    if: always() && needs.resolve.result == 'success' && needs.build.result != 'failure' && needs.build.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar pruebas en la VM
+        env:
+          SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM: ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+          META: ${{ needs.resolve.outputs.meta }}
+          CLEAN: ${{ inputs.limpia }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/vm && chmod 600 ~/.ssh/vm
+          printf '%s' "$TOKEN" | ssh -i ~/.ssh/vm -o StrictHostKeyChecking=accept-new "$VM" \
+            "docker login ghcr.io -u '$ACTOR' --password-stdin >/dev/null \
+             && cd /opt/ucopet/deploy && git pull -q --ff-only \
+             && CLEAN='$CLEAN' PRUEBAS_META='$META' scripts/deploy.sh pruebas"
+      - name: Resumen
+        run: |
+          {
+            echo "### Listo"
+            echo "- Front: https://$DOMAIN:9443"
+            echo "- Estado: https://$DOMAIN/estado/#pruebas"
+          } >> "$GITHUB_STEP_SUMMARY"
