@@ -1,0 +1,7 @@
+api        cristopherr26/ucopetapi
+front      cristopherr26/Front-End-UcoPetApi
+commercial MontoyaVJuli/ucopet-commercial-processor
+health     Michelgdr28/ucopet-health-processor
+payment    juliananaranjo/ucopet-payment-processor
+user       simongrisales/ucopet-user-processor
+inventory  jpgiraldomesa/ucopet-inventory-processor

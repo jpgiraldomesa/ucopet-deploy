@@ -1,0 +1,944 @@
+{
+  "exchanges": [
+    {
+      "name": "doctor.activate.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "doctor.create.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "doctor.deactivate.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "doctor.update.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "notification.create.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "notification.delete.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "pet.create.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "pet.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "pet.update.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "provider.create.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "provider.desactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "provider.update.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "specialtieDoctor.create.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "specialtieDoctor.deactivate.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "specialtieDoctor.update.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.commercial.sale-item.delete.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.commercial.sale-item.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.commercial.sale-item.update.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.commercial.sale.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.commercial.sale.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.commercial.sale.update.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.appointment.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.appointment.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.order.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.order.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.petcare.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.petcare.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.procedure.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.procedure.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.space.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.space.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.specialty.deactivate.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.health.specialty.save.ex",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.payment.receipt.cancel.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.payment.receipt.create.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ucopet.payment.receipt.update.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "doctor.activate.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "doctor.create.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "doctor.deactivate.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "doctor.update.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "notification.create.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "notification.delete.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "pet.create.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "pet.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "pet.update.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "provider.create.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "provider.desactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "provider.update.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "specialtieDoctor.create.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "specialtieDoctor.deactivate.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "specialtieDoctor.update.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.commercial.sale-item.delete.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.commercial.sale-item.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.commercial.sale-item.update.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.commercial.sale.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.commercial.sale.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.commercial.sale.update.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.appointment.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.appointment.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.order.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.order.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.petcare.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.petcare.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.procedure.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.procedure.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.space.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.space.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.specialty.deactivate.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.health.specialty.save.qu",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.payment.receipt.cancel.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.payment.receipt.create.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "ucopet.payment.receipt.update.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "source": "doctor.activate.exchange",
+      "vhost": "/",
+      "destination": "doctor.activate.queue",
+      "destination_type": "queue",
+      "routing_key": "doctor.activate.routingkey",
+      "arguments": {}
+    },
+    {
+      "source": "doctor.create.exchange",
+      "vhost": "/",
+      "destination": "doctor.create.queue",
+      "destination_type": "queue",
+      "routing_key": "doctor.create.routingkey",
+      "arguments": {}
+    },
+    {
+      "source": "doctor.deactivate.exchange",
+      "vhost": "/",
+      "destination": "doctor.deactivate.queue",
+      "destination_type": "queue",
+      "routing_key": "doctor.deactivate.routingkey",
+      "arguments": {}
+    },
+    {
+      "source": "doctor.update.exchange",
+      "vhost": "/",
+      "destination": "doctor.update.queue",
+      "destination_type": "queue",
+      "routing_key": "doctor.update.routingkey",
+      "arguments": {}
+    },
+    {
+      "source": "notification.create.ex",
+      "vhost": "/",
+      "destination": "notification.create.qu",
+      "destination_type": "queue",
+      "routing_key": "notification.create.rk",
+      "arguments": {}
+    },
+    {
+      "source": "notification.delete.ex",
+      "vhost": "/",
+      "destination": "notification.delete.qu",
+      "destination_type": "queue",
+      "routing_key": "notification.delete.rk",
+      "arguments": {}
+    },
+    {
+      "source": "pet.create.ex",
+      "vhost": "/",
+      "destination": "pet.create.qu",
+      "destination_type": "queue",
+      "routing_key": "pet.create.rk",
+      "arguments": {}
+    },
+    {
+      "source": "pet.deactivate.ex",
+      "vhost": "/",
+      "destination": "pet.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "pet.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "pet.update.ex",
+      "vhost": "/",
+      "destination": "pet.update.qu",
+      "destination_type": "queue",
+      "routing_key": "pet.update.rk",
+      "arguments": {}
+    },
+    {
+      "source": "provider.create.ex",
+      "vhost": "/",
+      "destination": "provider.create.qu",
+      "destination_type": "queue",
+      "routing_key": "provider.create.rk",
+      "arguments": {}
+    },
+    {
+      "source": "provider.desactivate.ex",
+      "vhost": "/",
+      "destination": "provider.desactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "provider.desactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "provider.update.ex",
+      "vhost": "/",
+      "destination": "provider.update.qu",
+      "destination_type": "queue",
+      "routing_key": "provider.update.rk",
+      "arguments": {}
+    },
+    {
+      "source": "specialtieDoctor.create.exchange",
+      "vhost": "/",
+      "destination": "specialtieDoctor.create.queue",
+      "destination_type": "queue",
+      "routing_key": "specialtieDoctor.create.routingkey",
+      "arguments": {}
+    },
+    {
+      "source": "specialtieDoctor.deactivate.exchange",
+      "vhost": "/",
+      "destination": "specialtieDoctor.deactivate.queue",
+      "destination_type": "queue",
+      "routing_key": "specialtieDoctor.deactivate.routingkey",
+      "arguments": {}
+    },
+    {
+      "source": "specialtieDoctor.update.exchange",
+      "vhost": "/",
+      "destination": "specialtieDoctor.update.queue",
+      "destination_type": "queue",
+      "routing_key": "specialtieDoctor.update.routingkey",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.commercial.sale-item.delete.ex",
+      "vhost": "/",
+      "destination": "ucopet.commercial.sale-item.delete.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.commercial.sale-item.delete.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.commercial.sale-item.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.commercial.sale-item.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.commercial.sale-item.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.commercial.sale-item.update.ex",
+      "vhost": "/",
+      "destination": "ucopet.commercial.sale-item.update.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.commercial.sale-item.update.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.commercial.sale.deactivate.ex",
+      "vhost": "/",
+      "destination": "ucopet.commercial.sale.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.commercial.sale.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.commercial.sale.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.commercial.sale.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.commercial.sale.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.commercial.sale.update.ex",
+      "vhost": "/",
+      "destination": "ucopet.commercial.sale.update.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.commercial.sale.update.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.appointment.deactivate.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.appointment.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.appointment.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.appointment.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.appointment.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.appointment.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.order.deactivate.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.order.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.order.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.order.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.order.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.order.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.petcare.deactivate.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.petcare.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.petcare.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.petcare.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.petcare.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.petcare.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.procedure.deactivate.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.procedure.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.procedure.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.procedure.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.procedure.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.procedure.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.space.deactivate.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.space.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.space.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.space.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.space.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.space.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.specialty.deactivate.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.specialty.deactivate.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.specialty.deactivate.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.health.specialty.save.ex",
+      "vhost": "/",
+      "destination": "ucopet.health.specialty.save.qu",
+      "destination_type": "queue",
+      "routing_key": "ucopet.health.specialty.save.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.payment.receipt.cancel.exchange",
+      "vhost": "/",
+      "destination": "ucopet.payment.receipt.cancel.queue",
+      "destination_type": "queue",
+      "routing_key": "ucopet.payment.receipt.cancel.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.payment.receipt.create.exchange",
+      "vhost": "/",
+      "destination": "ucopet.payment.receipt.create.queue",
+      "destination_type": "queue",
+      "routing_key": "ucopet.payment.receipt.create.rk",
+      "arguments": {}
+    },
+    {
+      "source": "ucopet.payment.receipt.update.exchange",
+      "vhost": "/",
+      "destination": "ucopet.payment.receipt.update.queue",
+      "destination_type": "queue",
+      "routing_key": "ucopet.payment.receipt.update.rk",
+      "arguments": {}
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+name: ucopet-infra
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ucopet
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ucopet"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+
+  rabbit:
+    image: rabbitmq:4-management
+    container_name: rabbit
+    hostname: rabbit
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ucopet
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:?falta RABBIT_PASSWORD}
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?falta DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:8443"
+      - "15671:15671"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 128m
+
+networks:
+  default:
+    name: ucopet
+
+volumes:
+  postgres_data:
+  rabbit_data:
+  caddy_data:
+  caddy_config:

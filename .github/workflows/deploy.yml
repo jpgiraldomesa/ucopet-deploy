@@ -1,0 +1,112 @@
+name: deploy
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Reconstruir todas las imagenes aunque no haya commits nuevos
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io/jpgiraldomesa
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      envs: ${{ steps.detect.outputs.envs }}
+      builds: ${{ steps.detect.outputs.builds }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: detect
+        env:
+          FORCE: ${{ inputs.force || github.event_name == 'push' }}
+          DEPLOY_ALL: ${{ github.event_name != 'schedule' }}
+        run: scripts/detect.sh
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.builds != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
+    name: ${{ matrix.svc }} (${{ matrix.env }})
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: deploy
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ matrix.sha }}
+          path: src
+      - id: node
+        if: matrix.svc == 'front'
+        run: echo "version=$(deploy/scripts/node-version.sh src)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: src
+          file: deploy/docker/${{ matrix.svc == 'front' && 'front' || 'spring' }}.Dockerfile
+          build-contexts: config=deploy/docker
+          build-args: NODE_VERSION=${{ steps.node.outputs.version || '24' }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/ucopet-${{ matrix.svc }}:${{ matrix.env }}
+            ${{ env.REGISTRY }}/ucopet-${{ matrix.svc }}:${{ matrix.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ matrix.sha }}
+            ucopet.repo=${{ matrix.repo }}
+          cache-from: type=gha,scope=${{ matrix.svc }}-${{ matrix.env }}
+          cache-to: type=gha,scope=${{ matrix.svc }}-${{ matrix.env }},mode=max
+
+  deploy:
+    needs: [detect, build]
+    if: always() && needs.detect.result == 'success' && needs.detect.outputs.envs != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        env: ${{ fromJson(needs.detect.outputs.envs) }}
+    steps:
+      - name: Desplegar ${{ matrix.env }} en la VM
+        env:
+          SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM: ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/vm && chmod 600 ~/.ssh/vm
+          printf '%s' "$TOKEN" | ssh -i ~/.ssh/vm -o StrictHostKeyChecking=accept-new "$VM" \
+            "docker login ghcr.io -u '$ACTOR' --password-stdin >/dev/null \
+             && cd /opt/ucopet \
+             && { [ -d deploy/.git ] || { rm -rf deploy && git clone -q https://github.com/${{ github.repository }}.git deploy; }; } \
+             && cd deploy && git pull -q --ff-only \
+             && scripts/deploy.sh ${{ matrix.env }}"

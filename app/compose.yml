@@ -1,0 +1,72 @@
+name: ucopet-${ENV:?falta ENV}
+
+x-spring: &spring
+  restart: unless-stopped
+  mem_limit: 448m
+  environment: &spring-env
+    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ucopet_${ENV}
+    SPRING_DATASOURCE_USERNAME: ucopet
+    SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    DB_URL: jdbc:postgresql://postgres:5432/ucopet_${ENV}
+    DB_USER: ucopet
+    DB_PASSWORD: ${POSTGRES_PASSWORD}
+    SPRING_RABBITMQ_HOST: rabbit
+    SPRING_RABBITMQ_USERNAME: ucopet
+    SPRING_RABBITMQ_PASSWORD: ${RABBIT_PASSWORD}
+    SPRING_RABBITMQ_VIRTUAL_HOST: ${ENV}
+    RABBIT_HOST: rabbit
+    RABBIT_USER: ucopet
+    RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+    SPRING_JPA_SHOW_SQL: "false"
+
+services:
+  api:
+    <<: *spring
+    image: ${REGISTRY}/ucopet-api:${ENV}
+    container_name: ucopet-${ENV}-api
+    mem_limit: 640m
+    environment:
+      <<: *spring-env
+      JAVA_TOOL_OPTIONS: -Xmx384m -Xss512k -XX:MaxMetaspaceSize=192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1
+      UCOPET_JWT_SECRET: ${JWT_SECRET}
+      UCOPET_ADMIN_EMAIL: admin@ucopet.com
+      UCOPET_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      UCOPET_CORS_ALLOWED_ORIGINS: ${PUBLIC_URL}
+
+  commercial:
+    <<: *spring
+    image: ${REGISTRY}/ucopet-commercial:${ENV}
+    container_name: ucopet-${ENV}-commercial
+
+  health:
+    <<: *spring
+    image: ${REGISTRY}/ucopet-health:${ENV}
+    container_name: ucopet-${ENV}-health
+
+  payment:
+    <<: *spring
+    image: ${REGISTRY}/ucopet-payment:${ENV}
+    container_name: ucopet-${ENV}-payment
+
+  user:
+    <<: *spring
+    image: ${REGISTRY}/ucopet-user:${ENV}
+    container_name: ucopet-${ENV}-user
+
+  inventory:
+    <<: *spring
+    image: ${REGISTRY}/ucopet-inventory:${ENV}
+    container_name: ucopet-${ENV}-inventory
+
+  front:
+    image: ${REGISTRY}/ucopet-front:${ENV}
+    container_name: ucopet-${ENV}-front
+    restart: unless-stopped
+    mem_limit: 64m
+    environment:
+      API_HOST: ucopet-${ENV}-api
+
+networks:
+  default:
+    name: ucopet
+    external: true
