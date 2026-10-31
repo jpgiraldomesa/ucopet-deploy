@@ -33,6 +33,8 @@ jobs:
       builds: ${{ steps.detect.outputs.builds }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -40,9 +42,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: detect
         env:
-          FORCE: ${{ inputs.force || github.event_name == 'push' }}
+          FORCE_INPUT: ${{ inputs.force }}
+          BEFORE: ${{ github.event.before }}
           DEPLOY_ALL: ${{ github.event_name != 'schedule' }}
-        run: scripts/detect.sh
+        run: |
+          FORCE=false
+          [ "$FORCE_INPUT" = true ] && FORCE=true
+          if [ "${{ github.event_name }}" = push ] && git cat-file -e "$BEFORE" 2>/dev/null \
+             && git diff --name-only "$BEFORE" HEAD | grep -qE '^(docker/|services.txt)'; then
+            echo "Cambio la forma de construir: se reconstruye todo"
+            FORCE=true
+          fi
+          FORCE=$FORCE scripts/detect.sh
 
   build:
     needs: detect

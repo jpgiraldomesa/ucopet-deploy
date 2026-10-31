@@ -1,9 +1,16 @@
 name: ucopet-infra
 
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: postgres
+    logging: *logging
     restart: unless-stopped
     environment:
       POSTGRES_USER: ucopet
@@ -21,6 +28,7 @@ services:
   rabbit:
     image: rabbitmq:4-management
     container_name: rabbit
+    logging: *logging
     hostname: rabbit
     restart: unless-stopped
     environment:
@@ -38,6 +46,7 @@ services:
   caddy:
     image: caddy:2-alpine
     container_name: caddy
+    logging: *logging
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:?falta DOMAIN}

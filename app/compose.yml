@@ -1,8 +1,15 @@
 name: ucopet-${ENV:?falta ENV}
 
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
 x-spring: &spring
   restart: unless-stopped
   mem_limit: 448m
+  logging: *logging
   environment: &spring-env
     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ucopet_${ENV}
     SPRING_DATASOURCE_USERNAME: ucopet
@@ -63,6 +70,7 @@ services:
     container_name: ucopet-${ENV}-front
     restart: unless-stopped
     mem_limit: 64m
+    logging: *logging
     environment:
       API_HOST: ucopet-${ENV}-api
 

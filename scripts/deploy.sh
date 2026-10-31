@@ -21,7 +21,8 @@ docker compose -f "$here/infra/compose.yml" --env-file "$secrets" up -d --wait
 docker exec caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
 
 status_job="* * * * * $here/scripts/status.py >/dev/null 2>&1"
-(crontab -l 2>/dev/null | grep -v 'scripts/status.py'; echo "$status_job") | crontab -
+backup_job="50 4 * * * $here/scripts/backup.sh >/dev/null 2>&1"
+{ crontab -l 2>/dev/null | grep -vE 'scripts/(status.py|backup.sh)' || true; echo "$status_job"; echo "$backup_job"; } | crontab -
 
 if ! docker exec postgres psql -U ucopet -d postgres -tAc "select 1 from pg_database where datname='ucopet_$env'" | grep -q 1; then
   docker exec postgres createdb -U ucopet "ucopet_$env"
