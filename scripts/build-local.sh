@@ -13,5 +13,5 @@ if [ "$svc" = front ]; then
     --build-context config="$here/docker" \
     -t "$registry/ucopet-front:$env" "$src"
 else
-  docker build -f "$here/docker/spring.Dockerfile" -t "$registry/ucopet-$svc:$env" "$src"
+  docker build -f "$here/docker/spring.Dockerfile" --build-context config="$here/docker" -t "$registry/ucopet-$svc:$env" "$src"
 fi

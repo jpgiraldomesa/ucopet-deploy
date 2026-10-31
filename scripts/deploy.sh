@@ -30,14 +30,27 @@ sed "s#\"vhost\": *\"/\"#\"vhost\": \"$env\"#g" "$here/infra/rabbit-topology.jso
 docker exec rabbit rabbitmqctl -q import_definitions "/tmp/topology-$env.json" >/dev/null
 
 docker compose -f "$here/app/compose.yml" pull -q --ignore-pull-failures
-docker compose -f "$here/app/compose.yml" up -d --remove-orphans api
-i=0
-since=$(docker inspect -f '{{.State.StartedAt}}' "ucopet-$env-api")
-until docker logs --since "$since" "ucopet-$env-api" 2>&1 | grep -q "Started "; do
-  i=$((i + 1)); [ $i -ge 24 ] && { echo "la API de $env no arranco en 2 minutos; sigo igual"; break; }
-  sleep 5
+ready=""
+for svc in $(docker compose -f "$here/app/compose.yml" config --services); do
+  if docker image inspect "$REGISTRY/ucopet-$svc:$env" >/dev/null 2>&1; then
+    ready="$ready $svc"
+  else
+    echo "$env: $svc no tiene imagen todavia (su rama no compila), se salta"
+  fi
 done
-docker compose -f "$here/app/compose.yml" up -d --remove-orphans
+
+case " $ready " in
+  *" api "*)
+    docker compose -f "$here/app/compose.yml" up -d api
+    i=0
+    since=$(docker inspect -f '{{.State.StartedAt}}' "ucopet-$env-api")
+    until docker logs --since "$since" "ucopet-$env-api" 2>&1 | grep -q "Started "; do
+      i=$((i + 1)); [ $i -ge 24 ] && { echo "la API de $env no arranco en 2 minutos; sigo igual"; break; }
+      sleep 5
+    done
+    ;;
+esac
+docker compose -f "$here/app/compose.yml" up -d --remove-orphans $ready
 docker image prune -f >/dev/null
 
 "$here/scripts/seed.sh" "$env"

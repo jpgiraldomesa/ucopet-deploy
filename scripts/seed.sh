@@ -15,6 +15,10 @@ tables_exist() {
   done
 }
 
+if [ "$(docker inspect -f '{{.State.Running}}' "ucopet-$env-api" 2>/dev/null)" != true ]; then
+  echo "semilla $env: la API no esta corriendo, se salta"; exit 0
+fi
+
 i=0
 until tables_exist persons headquarter products; do
   i=$((i + 1))
