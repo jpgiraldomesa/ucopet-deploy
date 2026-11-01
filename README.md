@@ -106,10 +106,10 @@ No se hace desde la pagina de estado porque es publica y sin login: cualquiera c
 La VM esta apagada de 12 am a 6 am (hora de Colombia) para ahorrar creditos.
 
 - **Apagado, 05:00 UTC:** el apagado automatico de Azure (`shutdown-computevm-vm-ucopet`), que libera la VM.
-- **Encendido:** a mano (Actions, workflow `vm`, `start`, o `az vm start -g rg-ucopet -n vm-ucopet`).
-  `.github/workflows/vm.yml` lo intenta a las 11:00 UTC con la app de Entra `ucopet-deploy-github` por OIDC
-  (sin secreto guardado, rol *Virtual Machine Contributor* solo sobre `rg-ucopet`), pero el cron de GitHub
-  llega con horas de atraso: no hay que contar con el.
+- **Encendido:** solo a mano (Actions, workflow `vm`, `start`, o `az vm start -g rg-ucopet -n vm-ucopet`).
+  `.github/workflows/vm.yml` entra con la app de Entra `ucopet-deploy-github` por OIDC (sin secreto guardado,
+  rol *Virtual Machine Contributor* solo sobre `rg-ucopet`). No tiene horario: el cron de GitHub llegaba con
+  horas de atraso y prendia la VM a cualquier hora.
 - **El despliegue no corre de 05:00 a 11:30 UTC**, para no fallar por SSH con la VM apagada.
 - **Prenderla o apagarla a mano:** pestaña Actions, workflow `vm`, `Run workflow` con `start` o `deallocate`.
 
