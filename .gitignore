@@ -3,3 +3,7 @@ secrets.env
 status/estado.json*
 status/pruebas.json
 status/apagado-*
+status/historial.json
+status/.muestra.json
+status/carga-*
+carga/resumen.md

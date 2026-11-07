@@ -1,0 +1,73 @@
+name: carga
+
+run-name: "carga ${{ inputs.entorno }}: ${{ inputs.usuarios }} usuarios, ${{ inputs.minutos }} min (${{ github.actor }})"
+
+on:
+  workflow_dispatch:
+    inputs:
+      entorno:
+        description: Entorno
+        type: choice
+        options: [pruebas, develop]
+        default: pruebas
+      minutos:
+        description: Cuanto dura
+        type: choice
+        options: ["1", "3", "5", "10"]
+        default: "3"
+      usuarios:
+        description: Usuarios simultaneos
+        type: choice
+        options: ["5", "10", "20", "50"]
+        default: "10"
+      escrituras:
+        description: Porcentaje de peticiones que crean un producto (pasan por el bus)
+        type: choice
+        options: ["0", "10", "30"]
+        default: "10"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carga
+  cancel-in-progress: false
+
+env:
+  DOMAIN: ucopet.westus2.cloudapp.azure.com
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar acceso a la VM
+        env:
+          SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM: ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/vm && chmod 600 ~/.ssh/vm
+          printf 'Host vm\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/vm\n  StrictHostKeyChecking accept-new\n' \
+            "${VM#*@}" "${VM%@*}" > ~/.ssh/config
+          ssh vm "cd /opt/ucopet/deploy && git pull -q --ff-only"
+      - name: Avisar a la pagina de estado
+        run: |
+          ssh vm "/opt/ucopet/deploy/scripts/carga.sh inicio ${{ inputs.entorno }} ${{ inputs.minutos }} \
+            ${{ inputs.usuarios }} ${{ inputs.escrituras }} '${{ github.actor }}' \
+            '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'"
+      - name: Correr la carga
+        run: |
+          PASSWORD=$(ssh vm "sed -n 's/^TEAM_PASSWORD=//p' /opt/ucopet/secrets.env")
+          echo "::add-mask::$PASSWORD"
+          case "${{ inputs.entorno }}" in pruebas) PORT=9443 ;; develop) PORT=8443 ;; esac
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/carga:/carga" -w /carga \
+            -e BASE="https://$DOMAIN:$PORT/api/v1" -e EMAIL=pablogiraldo@ucopet.com -e PASSWORD="$PASSWORD" \
+            -e VUS=${{ inputs.usuarios }} -e MINUTOS=${{ inputs.minutos }} -e ESCRITURAS=${{ inputs.escrituras }} \
+            -e RUN=${{ github.run_id }} grafana/k6:1.8.2 run --quiet carga.js || status=$?
+          cat carga/resumen.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          exit ${status:-0}
+      - name: Limpiar los productos de prueba
+        if: always()
+        run: ssh vm "/opt/ucopet/deploy/scripts/carga.sh fin ${{ inputs.entorno }} ${{ github.run_id }}"

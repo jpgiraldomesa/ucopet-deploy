@@ -92,6 +92,19 @@ Si ya existe la imagen de ese commit (de develop, de main o de otra prueba) se r
 Si una rama no existe, no se toca nada y el resumen de la ejecucion lo dice. Es uno solo: el ultimo que lo
 lanza lo ocupa. Solo construye lo que esta subido a GitHub.
 
+## Prueba de carga
+
+Pestaña Actions, workflow **carga**, `Run workflow`: entorno (`pruebas` o `develop`), minutos (1 a 10),
+usuarios simultaneos (5 a 50) y porcentaje de escrituras.
+
+- Corre k6 (`carga/carga.js`) desde GitHub, no desde la VM: la carga entra por Caddy y el front como la de
+  un usuario real. Entra con `pablogiraldo@ucopet.com` y mezcla lecturas del catalogo con creacion de
+  productos, que pasan por Rabbit y el procesador de Inventario.
+- Mientras corre, la pagina de estado muestra el aviso con la cuenta regresiva y en las graficas se ve
+  subir la CPU y los mensajes por segundo.
+- Al terminar, el resumen de la ejecucion trae peticiones por segundo, fallas y tiempos (mediana, p95,
+  p99) de lecturas y escrituras, y `scripts/carga.sh fin` borra los productos de prueba.
+
 ## Apagar o prender un entorno
 
 Pestaña Actions, workflow **entorno**, `Run workflow`: elegir `main`, `develop` o `pruebas` y `apagar` o `encender`.

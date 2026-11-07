@@ -15,6 +15,10 @@ OUT = os.path.join(HERE, "status", "estado.json")
 
 ENVS = {"main": "", "develop": ":8443", "pruebas": ":9443"}
 PRUEBAS_META = os.path.join(HERE, "status", "pruebas.json")
+SAMPLE = os.path.join(HERE, "status", ".muestra.json")
+HISTORY = os.path.join(HERE, "status", "historial.json")
+HISTORY_POINTS = 80
+CGROUP = "/sys/fs/cgroup/system.slice/docker-{}.scope"
 SERVICES = [
     ("api", "API", "api"),
     ("front", "Front", "front"),
@@ -68,6 +72,7 @@ def containers():
         image = images.get(c["Image"], {})
         net = (c["NetworkSettings"].get("Networks") or {}).get("ucopet") or {}
         result[name] = {
+            "id": c["Id"],
             "status": state.get("Status"),
             "health": (state.get("Health") or {}).get("Status"),
             "restarts": c.get("RestartCount", 0),
@@ -78,6 +83,45 @@ def containers():
             "ip": net.get("IPAddress"),
         }
     return result
+
+
+def read_json(path, default):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return default
+
+
+def write_json(path, data):
+    tmp = f"{path}.{os.getpid()}.tmp"
+    with open(tmp, "w") as f:
+        json.dump(data, f, ensure_ascii=False)
+    os.replace(tmp, path)
+
+
+def usage(cs, now):
+    # CPU de cada contenedor como porcentaje de un nucleo (la VM tiene 2: el tope es 200 %),
+    # sacado de la diferencia de usage_usec entre esta muestra y la anterior. Memoria en MB.
+    prev = read_json(SAMPLE, {})
+    sample = {"t": now.timestamp(), "cpu": {}}
+    for name, c in cs.items():
+        if c["status"] != "running":
+            continue
+        base = CGROUP.format(c["id"])
+        try:
+            with open(f"{base}/cpu.stat") as f:
+                usec = int(f.readline().split()[1])
+            with open(f"{base}/memory.current") as f:
+                c["mem_mb"] = round(int(f.read()) / 1048576)
+        except (OSError, ValueError, IndexError):
+            continue
+        sample["cpu"][c["id"]] = usec
+        before = prev.get("cpu", {}).get(c["id"])
+        elapsed = sample["t"] - prev.get("t", 0)
+        if before is not None and 0 < elapsed < 120:
+            c["cpu"] = round(max(0, usec - before) / (elapsed * 1e6) * 100, 1)
+    write_json(SAMPLE, sample)
 
 
 def rabbit(path, password, host):
@@ -100,11 +144,14 @@ def main():
     cs = containers()
     by_ip = {v["ip"]: k for k, v in cs.items() if v["ip"]}
     now = datetime.datetime.now(datetime.timezone.utc)
+    usage(cs, now)
 
     queues, consumers, rabbit_error = [], [], None
     rabbit_ip = (cs.get("rabbit") or {}).get("ip")
+    columns = ("name,vhost,messages,consumers,message_stats.publish_details.rate,"
+               "message_stats.ack_details.rate,message_stats.deliver_get_details.rate")
     try:
-        queues = rabbit("queues?columns=name,vhost,messages,consumers", s["RABBIT_PASSWORD"], rabbit_ip)
+        queues = rabbit(f"queues?columns={columns}", s["RABBIT_PASSWORD"], rabbit_ip)
         consumers = rabbit("consumers", s["RABBIT_PASSWORD"], rabbit_ip)
     except Exception as e:
         rabbit_error = str(e)
@@ -122,21 +169,34 @@ def main():
         env_queues = []
         for q in sorted((q for q in queues if q["vhost"] == env), key=lambda q: q["name"]):
             who = sorted(c[len(prefix):] for c in listeners.get((env, q["name"]), set()) if c.startswith(prefix))
+            stats = q.get("message_stats") or {}
+            out = (stats.get("ack_details") or stats.get("deliver_get_details") or {}).get("rate", 0)
             env_queues.append({
                 "name": q["name"],
                 "owner": who[0] if who else owner_by_prefix(q["name"]),
                 "listeners": who,
                 "consumers": q.get("consumers", 0),
                 "messages": q.get("messages", 0),
+                "rate_in": round((stats.get("publish_details") or {}).get("rate", 0), 2),
+                "rate_out": round(out, 2),
             })
         services = []
         for svc, label, kind in SERVICES:
-            c = cs.get(prefix + svc)
-            services.append({"svc": svc, "label": label, "kind": kind, **(c or {"status": "missing"})})
+            c = dict(cs.get(prefix + svc) or {"status": "missing"})
+            c.pop("id", None)
+            services.append({"svc": svc, "label": label, "kind": kind, **c})
         envs[env] = {
             "url": f"https://{s['DOMAIN']}{port}",
             "services": services,
             "queues": env_queues,
+            "load": read_json(os.path.join(HERE, "status", f"carga-{env}.json"), None),
+            "totals": {
+                "cpu": round(sum(x.get("cpu", 0) for x in services), 1),
+                "mem_mb": sum(x.get("mem_mb", 0) for x in services),
+                "rate_in": round(sum(q["rate_in"] for q in env_queues), 2),
+                "rate_out": round(sum(q["rate_out"] for q in env_queues), 2),
+                "messages": sum(q["messages"] for q in env_queues),
+            },
         }
         try:
             with open(os.path.join(HERE, "status", f"apagado-{env}")) as f:
@@ -150,19 +210,23 @@ def main():
             except (OSError, ValueError):
                 envs[env]["meta"] = None
 
-    infra = [{"name": n, **{k: cs[n][k] for k in ("status", "health", "restarts", "started_at")}}
+    infra = [{"name": n, **{k: cs[n].get(k) for k in ("status", "health", "restarts", "started_at", "cpu", "mem_mb")}}
              for n in ("postgres", "rabbit", "caddy") if n in cs]
 
-    data = {
+    history = read_json(HISTORY, [])
+    history.append({"t": now.isoformat(timespec="seconds"),
+                    "infra_cpu": round(sum(i.get("cpu") or 0 for i in infra), 1),
+                    "envs": {e: v["totals"] for e, v in envs.items()}})
+    history = history[-HISTORY_POINTS:]
+    write_json(HISTORY, history)
+
+    write_json(OUT, {
         "generated_at": now.isoformat(timespec="seconds"),
         "rabbit_error": rabbit_error,
         "infra": infra,
         "envs": envs,
-    }
-    tmp = f"{OUT}.{os.getpid()}.tmp"
-    with open(tmp, "w") as f:
-        json.dump(data, f, ensure_ascii=False)
-    os.replace(tmp, OUT)
+        "history": history,
+    })
 
 
 if __name__ == "__main__":

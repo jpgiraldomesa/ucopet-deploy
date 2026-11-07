@@ -66,6 +66,15 @@
             border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
   .banner b { font-weight: 600; }
   footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
+  .banner.live { border-left-color: var(--warn); }
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .chart h4 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+  .chart .now { font-size: 22px; font-weight: 700; margin: 4px 0 6px; font-variant-numeric: tabular-nums; }
+  .chart .now small { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .chart svg { display: block; width: 100%; height: 64px; }
+  .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -75,8 +84,9 @@
     <div class="updated" id="updated">Cargando…</div>
   </header>
   <p class="intro">Los procesadores no tienen pantalla: escuchan colas de RabbitMQ y escriben en la base.
-    Aquí se ve si cada pieza está arriba, qué commit está corriendo y qué colas tiene escuchando cada procesador.
-    Se actualiza sola cada 5 segundos.</p>
+    Aquí se ve si cada pieza está arriba, qué commit está corriendo, cuánto consume y qué colas tiene escuchando
+    cada procesador. Se actualiza sola cada 5 segundos. Para probarlo bajo carga:
+    <a href="https://github.com/jpgiraldomesa/ucopet-deploy/actions/workflows/carga.yml">Actions → carga</a>.</p>
 
   <div class="bar">
     <div class="tabs" role="tablist">
@@ -88,7 +98,9 @@
   </div>
   <div id="error"></div>
   <div id="banner"></div>
+  <div id="loadbanner"></div>
   <div class="infra" id="infra"></div>
+  <div class="charts" id="charts"></div>
   <div class="grid" id="services"></div>
   <h2>Colas por procesador</h2>
   <div id="queues"></div>
@@ -140,6 +152,9 @@
     if (s.status === "missing") lines.push("Su rama no compila todavía");
     if (s.status === "running" && cls === "ok") lines.push(`Arriba hace <b>${ago(s.started_at)}</b>`);
     if (s.restarts > 0) lines.push(`Reinicios: <b>${s.restarts}</b>`);
+    if (s.status === "running" && s.mem_mb != null) {
+      lines.push(`CPU <b>${fmt(s.cpu ?? 0)} %</b> · RAM <b>${s.mem_mb} MB</b>`);
+    }
     if (s.kind === "processor") {
       const own = queues.filter(q => q.owner === s.svc);
       const heard = own.filter(q => q.listeners.includes(s.svc)).length;
@@ -150,18 +165,73 @@
       <div class="kind">${kind}</div><div class="meta">${lines.map(l => `<div>${l}</div>`).join("")}</div></div>`;
   }
 
+  const CARGA = "https://github.com/jpgiraldomesa/ucopet-deploy/actions/workflows/carga.yml";
+  const fmt = n => (Math.round(n * 10) / 10).toLocaleString("es-CO");
+
+  function spark(points, series, floor) {
+    const w = 300, h = 64, pad = 3;
+    const all = points.flatMap(p => series.map(s => p[s.key] ?? 0));
+    const max = Math.max(floor, ...all);
+    const x = i => points.length < 2 ? w : pad + i * (w - 2 * pad) / (points.length - 1);
+    const y = v => h - pad - (v / max) * (h - 2 * pad);
+    const lines = series.map(s => {
+      const d = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[s.key] ?? 0).toFixed(1)}`).join("");
+      return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }).join("");
+    const grid = `<line x1="0" x2="${w}" y1="${h - pad}" y2="${h - pad}" stroke="var(--line)"/>`;
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img"
+      aria-label="${esc(series.map(s => s.label).join(" y "))}, máximo ${fmt(max)}">${grid}${lines}</svg>`;
+  }
+
+  function charts() {
+    const pts = (data.history || []).map(p => ({ ...(p.envs?.[env] || {}), t: p.t }));
+    const now = data.envs[env].totals || {};
+    if (!pts.length) return "";
+    const span = pts.length > 1 ? ago(pts[0].t) : "";
+    const cpuMax = 200;
+    const chart = (title, value, unit, series, floor, legend) => `<div class="chart">
+      <h4><span>${title}</span><span>${span ? `últimos ${span}` : ""}</span></h4>
+      <div class="now">${value} <small>${unit}</small></div>
+      ${spark(pts, series, floor)}
+      ${legend ? `<div class="legend">${series.map(s => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("")}</div>` : ""}
+    </div>`;
+    return chart("CPU del entorno", fmt(now.cpu ?? 0), `% de ${cpuMax}`,
+                 [{ key: "cpu", color: "var(--accent)", label: "CPU" }], 20, false)
+      + chart("Mensajes por segundo", `${fmt(now.rate_in ?? 0)} / ${fmt(now.rate_out ?? 0)}`, "entran / salen",
+              [{ key: "rate_in", color: "var(--accent)", label: "Entran" }, { key: "rate_out", color: "var(--ok)", label: "Salen" }], 1, true)
+      + chart("En espera en las colas", fmt(now.messages ?? 0), "mensajes",
+              [{ key: "messages", color: "var(--warn)", label: "En espera" }], 5, false)
+      + chart("Memoria del entorno", fmt((now.mem_mb ?? 0) / 1024), "GB",
+              [{ key: "mem_mb", color: "var(--muted)", label: "RAM" }], 1024, false);
+  }
+
+  function loadBanner(load) {
+    if (!load) return "";
+    const end = new Date(load.hasta);
+    const left = (end - Date.now()) / 1000;
+    const who = `por <b>${esc(load.by)}</b>: ${esc(load.vus)} usuarios, ${esc(load.escrituras)} % escrituras`;
+    const run = load.run_url ? ` <a href="${esc(load.run_url)}">Ver la ejecución</a>.` : "";
+    if (left > 0) {
+      const m = Math.floor(left / 60), s = Math.floor(left % 60);
+      return `<div class="banner live"><b>Carga en curso</b> ${who}. Termina en ${m}:${String(s).padStart(2, "0")}.${run}</div>`;
+    }
+    if (-left < 1800) return `<div class="banner">Última carga ${who}, terminó hace ${ago(load.hasta)}. Los tiempos de respuesta están en la ejecución.${run}</div>`;
+    return "";
+  }
+
   function queueGroup(owner, list) {
     const heard = list.filter(q => q.listeners.length).length;
     const pending = list.reduce((n, q) => n + q.messages, 0);
     const rows = list.map(q => `<tr><td class="q">${esc(q.name)}</td>
       <td>${q.listeners.length ? `<span class="pill ok">${esc(q.listeners.map(l => NAMES[l] || l).join(", "))}</span>`
                                : `<span class="pill off">nadie</span>`}</td>
+      <td class="n">${fmt(q.rate_in ?? 0)}</td><td class="n">${fmt(q.rate_out ?? 0)}</td>
       <td class="n">${q.messages}</td></tr>`).join("");
     const key = `${env}:${owner}`;
     const open = openGroups[key] ?? heard < list.length;
     return `<details data-key="${esc(key)}"${open ? " open" : ""}>
       <summary>${esc(NAMES[owner] || "Sin dueño claro")} <span>${heard} de ${list.length} escuchadas${pending ? ` · ${pending} mensajes en espera` : ""}</span></summary>
-      <div class="table-wrap"><table><thead><tr><th>Cola</th><th>La escucha</th><th class="n">En espera</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Cola</th><th>La escucha</th><th class="n">Entran/s</th><th class="n">Salen/s</th><th class="n">En espera</th></tr></thead>
       <tbody>${rows}</tbody></table></div></details>`;
   }
 
@@ -188,6 +258,8 @@
            Para cargar tus ramas: <a href="${FORM}">Actions → probar ramas</a>.</div>`
         : `<div class="banner">Nadie ha cargado ramas todavía. Se cargan desde
            <a href="${FORM}">Actions → probar ramas</a>.</div>`;
+    document.getElementById("loadbanner").innerHTML = loadBanner(e.load);
+    document.getElementById("charts").innerHTML = e.off ? "" : charts();
     document.getElementById("services").innerHTML = e.services
       .map(s => card(s, e.queues, meta?.branches?.[s.svc]?.branch)).join("");
     const groups = {};
