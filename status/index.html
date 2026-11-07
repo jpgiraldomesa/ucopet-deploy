@@ -26,6 +26,10 @@
   h1 span { color: var(--accent); }
   .updated { color: var(--muted); font-size: 13px; }
   .updated.stale { color: var(--bad); font-weight: 600; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+         margin-right: 6px; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
   .intro { color: var(--muted); margin: 8px 0 20px; max-width: 70ch; }
   .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .tabs { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
@@ -72,7 +76,7 @@
   </header>
   <p class="intro">Los procesadores no tienen pantalla: escuchan colas de RabbitMQ y escriben en la base.
     Aquí se ve si cada pieza está arriba, qué commit está corriendo y qué colas tiene escuchando cada procesador.
-    Se actualiza cada minuto.</p>
+    Se actualiza sola cada 5 segundos.</p>
 
   <div class="bar">
     <div class="tabs" role="tablist">
@@ -96,7 +100,9 @@
   const ORDER = ["commercial", "health", "payment", "user", "inventory"];
   const NAMES = { api: "API", front: "Front", commercial: "Comercial", health: "Salud",
                   payment: "Pagos", user: "Usuarios", inventory: "Inventario" };
+  const openGroups = {};
   let data = null;
+  let offline = false;
   const ENVS = ["develop", "main", "pruebas"];
   const FORM = "https://github.com/jpgiraldomesa/ucopet-deploy/actions/workflows/probar.yml";
   const ENTORNO = "https://github.com/jpgiraldomesa/ucopet-deploy/actions/workflows/entorno.yml";
@@ -151,7 +157,9 @@
       <td>${q.listeners.length ? `<span class="pill ok">${esc(q.listeners.map(l => NAMES[l] || l).join(", "))}</span>`
                                : `<span class="pill off">nadie</span>`}</td>
       <td class="n">${q.messages}</td></tr>`).join("");
-    return `<details${heard < list.length ? " open" : ""}>
+    const key = `${env}:${owner}`;
+    const open = openGroups[key] ?? heard < list.length;
+    return `<details data-key="${esc(key)}"${open ? " open" : ""}>
       <summary>${esc(NAMES[owner] || "Sin dueño claro")} <span>${heard} de ${list.length} escuchadas${pending ? ` · ${pending} mensajes en espera` : ""}</span></summary>
       <div class="table-wrap"><table><thead><tr><th>Cola</th><th>La escucha</th><th class="n">En espera</th></tr></thead>
       <tbody>${rows}</tbody></table></div></details>`;
@@ -159,12 +167,9 @@
 
   function render() {
     document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.env === env));
+    tick();
     if (!data) return;
     const e = data.envs[env];
-    const age = (Date.now() - new Date(data.generated_at)) / 1000;
-    const up = document.getElementById("updated");
-    up.textContent = `Actualizado hace ${ago(data.generated_at)}`;
-    up.classList.toggle("stale", age > 180);
     document.getElementById("error").innerHTML = data.rabbit_error
       ? `<div class="error">No se pudo leer RabbitMQ: ${esc(data.rabbit_error)}</div>` : "";
     document.getElementById("links").innerHTML =
@@ -193,22 +198,46 @@
       : `<p class="intro">Este entorno todavía no tiene colas.</p>`;
   }
 
+  function tick() {
+    const up = document.getElementById("updated");
+    const age = data ? (Date.now() - new Date(data.generated_at)) / 1000 : Infinity;
+    const live = !offline && age <= 30;
+    up.classList.toggle("stale", !live);
+    up.innerHTML = offline
+      ? "Sin conexión con el servidor: puede estar apagado"
+      : !data ? "Cargando…"
+      : live ? `<span class="dot"></span>En vivo · hace ${ago(data.generated_at)}`
+      : `Sin datos nuevos hace ${ago(data.generated_at)}`;
+  }
+
   async function load() {
+    if (document.hidden) return;
     try {
       const r = await fetch("estado.json", { cache: "no-store" });
-      data = await r.json();
+      if (!r.ok) throw new Error(r.status);
+      const next = await r.json();
+      offline = false;
+      if (next.generated_at !== data?.generated_at) {
+        data = next;
+        render();
+      }
     } catch (err) {
-      document.getElementById("updated").textContent = "No se pudo cargar el estado";
+      offline = true;
     }
-    render();
+    tick();
   }
 
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
     env = b.dataset.env; history.replaceState(null, "", "#" + env); render();
   }));
+  document.getElementById("queues").addEventListener("toggle", e => {
+    openGroups[e.target.dataset.key] = e.target.open;
+  }, true);
+  document.addEventListener("visibilitychange", load);
+  render();
   load();
-  setInterval(load, 30000);
-  setInterval(render, 10000);
+  setInterval(load, 5000);
+  setInterval(tick, 1000);
 </script>
 </body>
 </html>

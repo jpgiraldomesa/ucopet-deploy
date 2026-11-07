@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Corre en la VM cada minuto (cron). Junta el estado de los contenedores y de las colas
+# Corre en la VM cada 5 segundos (status-loop.sh). Junta el estado de los contenedores y de las colas
 # de Rabbit y lo escribe en status/estado.json, que Caddy sirve en /estado.
 # No expone el socket de Docker ni la clave de Rabbit: solo escribe un archivo.
 import base64
@@ -159,7 +159,7 @@ def main():
         "infra": infra,
         "envs": envs,
     }
-    tmp = OUT + ".tmp"
+    tmp = f"{OUT}.{os.getpid()}.tmp"
     with open(tmp, "w") as f:
         json.dump(data, f, ensure_ascii=False)
     os.replace(tmp, OUT)

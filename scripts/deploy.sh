@@ -27,10 +27,10 @@ mkdir -p "$here/status"
 docker compose -f "$here/infra/compose.yml" --env-file "$secrets" up -d --wait
 docker exec caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
 
-status_job="* * * * * $here/scripts/status.py >/dev/null 2>&1"
+status_job="* * * * * flock -n /tmp/ucopet-status.lock $here/scripts/status-loop.sh >/dev/null 2>&1"
 backup_job="50 4 * * * $here/scripts/backup.sh >/dev/null 2>&1"
 watch_job="*/5 * * * * $here/scripts/watch.sh >/dev/null 2>&1"
-{ crontab -l 2>/dev/null | grep -vE 'scripts/(status.py|backup.sh|watch.sh)' || true
+{ crontab -l 2>/dev/null | grep -vE 'scripts/(status.py|status-loop.sh|backup.sh|watch.sh)' || true
   echo "$status_job"; echo "$backup_job"; echo "$watch_job"; } | crontab -
 
 if [ -f "$here/status/apagado-$env" ]; then

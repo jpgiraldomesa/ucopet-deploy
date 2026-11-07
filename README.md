@@ -13,8 +13,9 @@ Dockerfile y la configuracion viven aqui.
 | Estado | | `https://<dominio>/estado/` |
 
 La pagina de estado muestra, por entorno, si cada pieza esta arriba, que commit corre y que colas
-escucha cada procesador (que no tienen pantalla). La arma `scripts/status.py` cada minuto por cron
-en la VM; escribe `status/estado.json` y Caddy lo sirve. No expone Docker ni la clave de Rabbit.
+escucha cada procesador (que no tienen pantalla). La arma `scripts/status.py` cada 5 segundos en la
+VM (`scripts/status-loop.sh`, que cron relanza cada minuto); escribe `status/estado.json`, Caddy lo
+sirve y la pagina lo consulta cada 5 segundos. No expone Docker ni la clave de Rabbit.
 
 ## Como funciona
 
