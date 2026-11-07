@@ -209,7 +209,8 @@
     if (!load) return "";
     const end = new Date(load.hasta);
     const left = (end - Date.now()) / 1000;
-    const who = `por <b>${esc(load.by)}</b>: ${esc(load.vus)} usuarios, ${esc(load.escrituras)} % escrituras`;
+    const what = load.modulo === "login" ? "del login (inicios de sesión y altas de persona)" : "del catálogo";
+    const who = `${what} por <b>${esc(load.by)}</b>: ${esc(load.vus)} usuarios, ${esc(load.escrituras)} % escrituras`;
     const run = load.run_url ? ` <a href="${esc(load.run_url)}">Ver la ejecución</a>.` : "";
     if (left > 0) {
       const m = Math.floor(left / 60), s = Math.floor(left % 60);

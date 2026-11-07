@@ -1,10 +1,15 @@
 name: carga
 
-run-name: "carga ${{ inputs.entorno }}: ${{ inputs.usuarios }} usuarios, ${{ inputs.minutos }} min (${{ github.actor }})"
+run-name: "carga ${{ inputs.modulo }} en ${{ inputs.entorno }}: ${{ inputs.usuarios }} usuarios, ${{ inputs.minutos }} min (${{ github.actor }})"
 
 on:
   workflow_dispatch:
     inputs:
+      modulo:
+        description: Que se carga
+        type: choice
+        options: [catalogo, login]
+        default: catalogo
       entorno:
         description: Entorno
         type: choice
@@ -13,7 +18,7 @@ on:
       minutos:
         description: Cuanto dura
         type: choice
-        options: ["1", "3", "5", "10"]
+        options: ["1", "3", "5", "10", "15", "20"]
         default: "3"
       usuarios:
         description: Usuarios simultaneos
@@ -21,7 +26,7 @@ on:
         options: ["5", "10", "20", "50"]
         default: "10"
       escrituras:
-        description: Porcentaje de peticiones que crean un producto (pasan por el bus)
+        description: Porcentaje de peticiones que escriben por el bus (productos en catalogo, personas en login)
         type: choice
         options: ["0", "10", "30"]
         default: "10"
@@ -39,7 +44,7 @@ env:
 jobs:
   carga:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Preparar acceso a la VM
@@ -56,6 +61,7 @@ jobs:
         run: |
           ssh vm "/opt/ucopet/deploy/scripts/carga.sh inicio ${{ inputs.entorno }} ${{ inputs.minutos }} \
             ${{ inputs.usuarios }} ${{ inputs.escrituras }} '${{ github.actor }}' \
+            '${{ inputs.modulo }}' \
             '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'"
       - name: Correr la carga
         run: |
@@ -65,9 +71,9 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/carga:/carga" -w /carga \
             -e BASE="https://$DOMAIN:$PORT/api/v1" -e EMAIL=pablogiraldo@ucopet.com -e PASSWORD="$PASSWORD" \
             -e VUS=${{ inputs.usuarios }} -e MINUTOS=${{ inputs.minutos }} -e ESCRITURAS=${{ inputs.escrituras }} \
-            -e RUN=${{ github.run_id }} grafana/k6:1.8.2 run --quiet carga.js || status=$?
+            -e RUN=${{ github.run_id }} grafana/k6:1.8.2 run --quiet ${{ inputs.modulo == 'login' && 'login.js' || 'carga.js' }} || status=$?
           cat carga/resumen.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
           exit ${status:-0}
       - name: Limpiar los productos de prueba
         if: always()
-        run: ssh vm "/opt/ucopet/deploy/scripts/carga.sh fin ${{ inputs.entorno }} ${{ github.run_id }}"
+        run: ssh vm "/opt/ucopet/deploy/scripts/carga.sh fin ${{ inputs.entorno }} ${{ github.run_id }} ${{ inputs.modulo }}"

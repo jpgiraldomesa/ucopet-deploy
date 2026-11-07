@@ -94,8 +94,12 @@ lanza lo ocupa. Solo construye lo que esta subido a GitHub.
 
 ## Prueba de carga
 
-Pestaña Actions, workflow **carga**, `Run workflow`: entorno (`pruebas` o `develop`), minutos (1 a 10),
-usuarios simultaneos (5 a 50) y porcentaje de escrituras.
+Pestaña Actions, workflow **carga**, `Run workflow`: modulo (`catalogo` o `login`), entorno (`pruebas` o
+`develop`), minutos (1 a 20), usuarios simultaneos (5 a 50) y porcentaje de escrituras.
+
+- **login** (`carga/login.js`): 40 % inicios de sesion (cada uno es un BCrypt y publica la notificacion
+  `LOGIN_SUCCEDED` por Rabbit, que consume el procesador de Usuarios), lecturas con token y altas de persona
+  por el bus (`person.create.qu`). Al terminar borra las personas `carga.k6.<id>.*` y esas notificaciones.
 
 - Corre k6 (`carga/carga.js`) desde GitHub, no desde la VM: la carga entra por Caddy y el front como la de
   un usuario real. Entra con `pablogiraldo@ucopet.com` y mezcla lecturas del catalogo con creacion de
