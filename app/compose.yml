@@ -41,6 +41,7 @@ services:
       UCOPET_ADMIN_EMAIL: admin@ucopet.com
       UCOPET_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       UCOPET_CORS_ALLOWED_ORIGINS: ${PUBLIC_URL}
+      UCOPET_COOKIE_SECURE: "true"
 
   commercial:
     <<: *spring
