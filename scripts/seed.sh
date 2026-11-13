@@ -44,3 +44,4 @@ run() {
 run 10-sedes.sql headquarter
 run 20-catalogo.sql products services service_headquarters stocks stock_movements headquarter
 run 30-personas.sql persons doctors
+run 40-restricciones.sql notifications providers

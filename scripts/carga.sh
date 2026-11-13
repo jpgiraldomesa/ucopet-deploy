@@ -44,6 +44,8 @@ EOF
         || date -u +%FT%TZ)
       docker exec -i postgres psql -U ucopet -d "ucopet_$env" -v ON_ERROR_STOP=1 -q <<SQL
 begin;
+delete from notifications where person_id in (select id from persons where email like 'carga.k6.$run.%')
+  or (type like 'USER_%' and message like '%Carga K6%');
 delete from persons where email like 'carga.k6.$run.%';
 delete from notifications where type = 'LOGIN_SUCCEDED'
   and person_id = (select id from persons where email = 'pablogiraldo@ucopet.com')
