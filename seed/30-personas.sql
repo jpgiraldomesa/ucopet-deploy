@@ -18,7 +18,14 @@ values
    '3007654321', 'La Ceja, Antioquia', :'clave', false, true, 0, 0)
 on conflict do nothing;
 
-insert into doctors (id, id_person, license_number) values
-  (md5('medico:medica.demo')::uuid, md5('persona:medica.demo')::uuid, 'MV-ANT-10234'),
-  (md5('medico:medico.demo')::uuid, md5('persona:medico.demo')::uuid, 'MV-ANT-11872')
+alter table doctors add column if not exists headquarter_id uuid;
+update doctors set headquarter_id = case id when md5('medico:medico.demo')::uuid then md5('sede:laceja')::uuid
+                                           else md5('sede:rionegro')::uuid end
+where headquarter_id is null;
+
+insert into doctors (id, id_person, license_number, headquarter_id) values
+  (md5('medico:medica.demo')::uuid, md5('persona:medica.demo')::uuid, 'MV-ANT-10234', md5('sede:rionegro')::uuid),
+  (md5('medico:medico.demo')::uuid, md5('persona:medico.demo')::uuid, 'MV-ANT-11872', md5('sede:laceja')::uuid)
 on conflict do nothing;
+
+alter table doctors alter column headquarter_id set not null;
