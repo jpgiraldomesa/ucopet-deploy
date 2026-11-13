@@ -81,6 +81,8 @@ docker compose -f "$here/app/compose.yml" up -d --remove-orphans $ready
 docker image prune -f >/dev/null
 
 "$here/scripts/seed.sh" "$env"
+sleep 30
+"$here/scripts/topology.py" "$env" faltantes || echo "topologia $env: no se pudieron revisar las colas faltantes"
 
 if [ "$env" = pruebas ] && [ -n "${PRUEBAS_META:-}" ]; then
   echo "$PRUEBAS_META" | base64 -d > "$here/status/pruebas.json"

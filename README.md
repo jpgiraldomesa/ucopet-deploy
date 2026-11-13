@@ -52,8 +52,8 @@ asi que llega un solo aviso por commit roto. El resumen de la ejecucion dice cua
 | `docker/nginx.conf.template` | `/api/` va a la API de su mismo entorno; el resto cae en `index.html` |
 | `infra/compose.yml` | lo compartido: Postgres, RabbitMQ y Caddy (HTTPS automatico) |
 | `app/compose.yml` | un entorno: la API, los cinco procesadores y el front |
-| `infra/rabbit-topology.json` | colas que ningun procesador declara solo (Salud), se importan en cada vhost |
-| `scripts/topology.py` | lee los `.properties` del jar de Salud y declara sus colas, asi una cola nueva no lo tumba |
+| `infra/rabbit-topology.json` | colas que nadie declara en su codigo (medicos, especialidades de medico, mascotas, ventas, Salud); se importan en cada vhost. Solo colas con consumidor |
+| `scripts/topology.py` | lee los `.properties` del jar de Salud y declara las colas que su codigo escucha, asi una cola nueva no lo tumba; las que solo nombra el `.properties` no se crean. Con `faltantes`, despues de levantar, declara las colas de la API que un procesador espera y todavia no existen (la API las crea recien al publicar por primera vez) |
 | `seed/` | sedes, catalogo y cuentas del equipo; se puede correr las veces que sea |
 
 Cada entorno tiene su propia base (`ucopet_main`, `ucopet_develop`) y su propio vhost de Rabbit.

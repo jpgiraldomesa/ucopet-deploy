@@ -82,33 +82,6 @@
       "arguments": {}
     },
     {
-      "name": "provider.create.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "provider.desactivate.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "provider.update.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
       "name": "specialtieDoctor.create.exchange",
       "vhost": "/",
       "type": "direct",
@@ -208,34 +181,7 @@
       "arguments": {}
     },
     {
-      "name": "ucopet.health.order.deactivate.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
       "name": "ucopet.health.order.save.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "ucopet.health.petcare.deactivate.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "ucopet.health.petcare.save.ex",
       "vhost": "/",
       "type": "direct",
       "durable": true,
@@ -272,24 +218,6 @@
     },
     {
       "name": "ucopet.health.space.save.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "ucopet.health.specialty.deactivate.ex",
-      "vhost": "/",
-      "type": "direct",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "ucopet.health.specialty.save.ex",
       "vhost": "/",
       "type": "direct",
       "durable": true,
@@ -408,33 +336,6 @@
       }
     },
     {
-      "name": "provider.create.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
-      "name": "provider.desactivate.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
-      "name": "provider.update.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
       "name": "specialtieDoctor.create.queue",
       "vhost": "/",
       "durable": true,
@@ -534,34 +435,7 @@
       }
     },
     {
-      "name": "ucopet.health.order.deactivate.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
       "name": "ucopet.health.order.save.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
-      "name": "ucopet.health.petcare.deactivate.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
-      "name": "ucopet.health.petcare.save.qu",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
@@ -598,24 +472,6 @@
     },
     {
       "name": "ucopet.health.space.save.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
-      "name": "ucopet.health.specialty.deactivate.qu",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-queue-type": "classic"
-      }
-    },
-    {
-      "name": "ucopet.health.specialty.save.qu",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
@@ -725,30 +581,6 @@
       "arguments": {}
     },
     {
-      "source": "provider.create.ex",
-      "vhost": "/",
-      "destination": "provider.create.qu",
-      "destination_type": "queue",
-      "routing_key": "provider.create.rk",
-      "arguments": {}
-    },
-    {
-      "source": "provider.desactivate.ex",
-      "vhost": "/",
-      "destination": "provider.desactivate.qu",
-      "destination_type": "queue",
-      "routing_key": "provider.desactivate.rk",
-      "arguments": {}
-    },
-    {
-      "source": "provider.update.ex",
-      "vhost": "/",
-      "destination": "provider.update.qu",
-      "destination_type": "queue",
-      "routing_key": "provider.update.rk",
-      "arguments": {}
-    },
-    {
       "source": "specialtieDoctor.create.exchange",
       "vhost": "/",
       "destination": "specialtieDoctor.create.queue",
@@ -837,35 +669,11 @@
       "arguments": {}
     },
     {
-      "source": "ucopet.health.order.deactivate.ex",
-      "vhost": "/",
-      "destination": "ucopet.health.order.deactivate.qu",
-      "destination_type": "queue",
-      "routing_key": "ucopet.health.order.deactivate.rk",
-      "arguments": {}
-    },
-    {
       "source": "ucopet.health.order.save.ex",
       "vhost": "/",
       "destination": "ucopet.health.order.save.qu",
       "destination_type": "queue",
       "routing_key": "ucopet.health.order.save.rk",
-      "arguments": {}
-    },
-    {
-      "source": "ucopet.health.petcare.deactivate.ex",
-      "vhost": "/",
-      "destination": "ucopet.health.petcare.deactivate.qu",
-      "destination_type": "queue",
-      "routing_key": "ucopet.health.petcare.deactivate.rk",
-      "arguments": {}
-    },
-    {
-      "source": "ucopet.health.petcare.save.ex",
-      "vhost": "/",
-      "destination": "ucopet.health.petcare.save.qu",
-      "destination_type": "queue",
-      "routing_key": "ucopet.health.petcare.save.rk",
       "arguments": {}
     },
     {
@@ -898,22 +706,6 @@
       "destination": "ucopet.health.space.save.qu",
       "destination_type": "queue",
       "routing_key": "ucopet.health.space.save.rk",
-      "arguments": {}
-    },
-    {
-      "source": "ucopet.health.specialty.deactivate.ex",
-      "vhost": "/",
-      "destination": "ucopet.health.specialty.deactivate.qu",
-      "destination_type": "queue",
-      "routing_key": "ucopet.health.specialty.deactivate.rk",
-      "arguments": {}
-    },
-    {
-      "source": "ucopet.health.specialty.save.ex",
-      "vhost": "/",
-      "destination": "ucopet.health.specialty.save.qu",
-      "destination_type": "queue",
-      "routing_key": "ucopet.health.specialty.save.rk",
       "arguments": {}
     },
     {
