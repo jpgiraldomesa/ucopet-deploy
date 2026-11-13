@@ -32,7 +32,7 @@ EOF
     ;;
   fin)
     run=$3; module=${4:-catalogo}
-    if [ "$module" = login ]; then queue='person\.create'; else queue='inventory\.product\.save'; fi
+    if [ "$module" = login ]; then queue='person.create'; else queue='inventory.product.save'; fi
     for i in $(seq 1 30); do
       left=$(docker exec rabbit rabbitmqctl -q list_queues -p "$env" name messages \
         | awk -v q="$queue" '$1 ~ q {s += $2} END {print s + 0}')
