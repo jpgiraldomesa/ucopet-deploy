@@ -51,7 +51,7 @@ sampler=$!
 docker run --rm --user "$(id -u):$(id -g)" -v "$here/carga:/carga:ro" -w /carga \
   -e BASE="https://$domain:8443/api/v1" -e EMAIL=pablogiraldo@ucopet.com -e PASSWORD="$password" \
   -e VUS="$vus" -e MINUTOS="$minutes" -e ESCRITURAS="$writes" -e RUN="$run" \
-  grafana/k6:1.8.2 run --quiet presion.js
+  grafana/k6:1.8.2 run presion.js
 echo "k6 termino con codigo $?"
 
 python3 - "$samples" <<'PY'
