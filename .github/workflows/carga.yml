@@ -8,7 +8,7 @@ on:
       modulo:
         description: Que se carga
         type: choice
-        options: [catalogo, login]
+        options: [catalogo, login, todos]
         default: catalogo
       entorno:
         description: Entorno
@@ -23,10 +23,10 @@ on:
       usuarios:
         description: Usuarios simultaneos
         type: choice
-        options: ["5", "10", "20", "50"]
+        options: ["5", "6", "10", "12", "20", "30", "50"]
         default: "10"
       escrituras:
-        description: Porcentaje de peticiones que escriben por el bus (productos en catalogo, personas en login)
+        description: Porcentaje de peticiones que escriben por el bus (catalogo y login; todos escribe siempre)
         type: choice
         options: ["0", "10", "30"]
         default: "10"
@@ -71,7 +71,7 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/carga:/carga" -w /carga \
             -e BASE="https://$DOMAIN:$PORT/api/v1" -e EMAIL=pablogiraldo@ucopet.com -e PASSWORD="$PASSWORD" \
             -e VUS=${{ inputs.usuarios }} -e MINUTOS=${{ inputs.minutos }} -e ESCRITURAS=${{ inputs.escrituras }} \
-            -e RUN=${{ github.run_id }} grafana/k6:1.8.2 run --quiet ${{ inputs.modulo == 'login' && 'login.js' || 'carga.js' }} || status=$?
+            -e RUN=${{ github.run_id }} grafana/k6:1.8.2 run --quiet ${{ inputs.modulo == 'login' && 'login.js' || inputs.modulo == 'todos' && 'todos.js' || 'carga.js' }} || status=$?
           cat carga/resumen.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
           exit ${status:-0}
       - name: Limpiar los productos de prueba

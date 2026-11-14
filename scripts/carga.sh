@@ -5,7 +5,8 @@
 #   scripts/carga.sh fin <entorno> <id-de-la-ejecucion> <modulo>
 #     Espera a que el procesador termine con lo que quedo en la cola, borra lo que creo la prueba
 #     (catalogo: productos "Carga k6 <id> ..."; login: personas carga.k6.<id>.* y las notificaciones
-#     de sus inicios de sesion) y marca la hora real de fin.
+#     de sus inicios de sesion; todos: personas, proveedores, espacios, recibos, productos y su stock)
+#     y marca la hora real de fin.
 set -e
 here=$(cd "$(dirname "$0")/.." && pwd)
 action=$1; env=$2
@@ -32,7 +33,11 @@ EOF
     ;;
   fin)
     run=$3; module=${4:-catalogo}
-    if [ "$module" = login ]; then queue='person.create'; else queue='inventory.product.save'; fi
+    case "$module" in
+      login) queue='person.create' ;;
+      todos) queue='.' ;;
+      *) queue='inventory.product.save' ;;
+    esac
     for i in $(seq 1 30); do
       left=$(docker exec rabbit rabbitmqctl -q list_queues -p "$env" name messages \
         | awk -v q="$queue" '$1 ~ q {s += $2} END {print s + 0}')
@@ -50,6 +55,20 @@ delete from persons where email like 'carga.k6.$run.%';
 delete from notifications where type = 'LOGIN_SUCCEDED'
   and person_id = (select id from persons where email = 'pablogiraldo@ucopet.com')
   and created_at >= ('$since'::timestamptz at time zone 'America/Bogota');
+commit;
+SQL
+    elif [ "$module" = todos ]; then
+      docker exec -i postgres psql -U ucopet -d "ucopet_$env" -v ON_ERROR_STOP=1 -q <<SQL
+begin;
+delete from notifications where person_id in (select id from persons where email like 'carga.$run.%')
+  or (type like 'USER_%' and message like '%Carga $run %');
+delete from persons where email like 'carga.$run.%';
+delete from providers where provider_name like 'Carga $run %';
+delete from spaces where description like 'Carga $run %';
+delete from receipts where concept like 'Carga $run %';
+delete from stock_movements where product_id in (select id from products where name like 'Carga $run %');
+delete from stocks where product_id in (select id from products where name like 'Carga $run %');
+delete from products where name like 'Carga $run %';
 commit;
 SQL
     else

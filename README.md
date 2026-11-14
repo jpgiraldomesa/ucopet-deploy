@@ -94,8 +94,14 @@ lanza lo ocupa. Solo construye lo que esta subido a GitHub.
 
 ## Prueba de carga
 
-Pestaña Actions, workflow **carga**, `Run workflow`: modulo (`catalogo` o `login`), entorno (`pruebas` o
+Pestaña Actions, workflow **carga**, `Run workflow`: modulo (`catalogo`, `login` o `todos`), entorno (`pruebas` o
 `develop`), minutos (1 a 20), usuarios simultaneos (5 a 50) y porcentaje de escrituras.
+
+- **todos** (`carga/todos.js`): un escenario por procesador, todos a la vez (usuarios / 6 en cada uno): personas
+  (Usuarios), proveedores (Comercial), espacios (Salud), productos y ajustes de stock (Inventario), recibos de caja
+  (Pagos) y lecturas. Siempre escribe. En la pagina de estado, la seccion **Cada pieza en vivo** muestra la CPU, la
+  memoria y los mensajes que entran, salen y esperan de cada procesador. Al terminar borra todo lo marcado
+  `Carga <id>`. El mismo recorrido esta en JMeter: `jmeter/ucopet-procesadores.jmx` (ver `jmeter/README.md`).
 
 - **login** (`carga/login.js`): 40 % inicios de sesion (cada uno es un BCrypt y publica la notificacion
   `LOGIN_SUCCEDED` por Rabbit, que consume el procesador de Usuarios), lecturas con token y altas de persona

@@ -17,7 +17,7 @@ ENVS = {"main": "", "develop": ":8443", "pruebas": ":9443"}
 PRUEBAS_META = os.path.join(HERE, "status", "pruebas.json")
 SAMPLE = os.path.join(HERE, "status", ".muestra.json")
 HISTORY = os.path.join(HERE, "status", "historial.json")
-HISTORY_POINTS = 80
+HISTORY_POINTS = 180
 CGROUP = "/sys/fs/cgroup/system.slice/docker-{}.scope"
 SERVICES = [
     ("api", "API", "api"),
@@ -37,6 +37,7 @@ PREFIXES = [
     ("provider.", "commercial"),
     ("person.", "user"),
     ("pet.", "user"),
+    ("tutorPet.", "user"),
     ("doctor.", "user"),
     ("notification.", "user"),
     ("specialtieDoctor.", "user"),
@@ -139,6 +140,22 @@ def owner_by_prefix(queue):
     return None
 
 
+def per_service(env_data):
+    out = {}
+    for x in env_data["services"]:
+        if x.get("status") != "running":
+            continue
+        own = [q for q in env_data["queues"] if q["owner"] == x["svc"]]
+        if x["svc"] == "api":
+            rate_in, rate_out, waiting = env_data["totals"]["rate_in"], 0, 0
+        else:
+            rate_in = round(sum(q["rate_in"] for q in own), 2)
+            rate_out = round(sum(q["rate_out"] for q in own), 2)
+            waiting = sum(q["messages"] for q in own)
+        out[x["svc"]] = [x.get("cpu", 0), x.get("mem_mb", 0), rate_in, rate_out, waiting]
+    return out
+
+
 def main():
     s = secrets()
     cs = containers()
@@ -216,7 +233,8 @@ def main():
     history = read_json(HISTORY, [])
     history.append({"t": now.isoformat(timespec="seconds"),
                     "infra_cpu": round(sum(i.get("cpu") or 0 for i in infra), 1),
-                    "envs": {e: v["totals"] for e, v in envs.items()}})
+                    "envs": {e: v["totals"] for e, v in envs.items()},
+                    "svc": {e: per_service(v) for e, v in envs.items() if not v.get("off")}})
     history = history[-HISTORY_POINTS:]
     write_json(HISTORY, history)
 

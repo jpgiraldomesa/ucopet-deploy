@@ -74,6 +74,9 @@
   .chart .now small { font-size: 13px; font-weight: 600; color: var(--muted); }
   .chart svg { display: block; width: 100%; height: 64px; }
   .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .pieces .chart svg { height: 44px; }
+  .pieces .chart .now { font-size: 15px; margin: 2px 0 4px; }
+  .pieces .chart .sub { font-size: 12px; color: var(--muted); margin: 6px 0 2px; }
   .legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
 </style>
 </head>
@@ -101,6 +104,10 @@
   <div id="loadbanner"></div>
   <div class="infra" id="infra"></div>
   <div class="charts" id="charts"></div>
+  <div id="piecesWrap"><h2>Cada pieza en vivo</h2>
+    <p class="intro">Cuánto consume cada pieza y cuántos mensajes le llegan y procesa por segundo. Para la API,
+      "entran" son los mensajes que publica hacia todos los procesadores.</p>
+    <div class="charts pieces" id="pieces"></div></div>
   <div class="grid" id="services"></div>
   <h2>Colas por procesador</h2>
   <div id="queues"></div>
@@ -205,11 +212,43 @@
               [{ key: "mem_mb", color: "var(--muted)", label: "RAM" }], 1024, false);
   }
 
+  const series = svc => svc === "api"
+    ? [{ key: "rate_in", color: "var(--accent)", label: "Publica" }]
+    : [{ key: "rate_in", color: "var(--accent)", label: "Entran" },
+       { key: "rate_out", color: "var(--ok)", label: "Salen" },
+       { key: "waiting", color: "var(--warn)", label: "En espera" }];
+
+  function pieces() {
+    const hist = (data.history || []).filter(p => p.svc?.[env]);
+    if (hist.length < 2) return "";
+    const span = ago(hist[0].t);
+    return ["api", ...ORDER].map(svc => {
+      const pts = hist.map(p => {
+        const v = p.svc[env][svc] || [0, 0, 0, 0, 0];
+        return { cpu: v[0], mem: v[1], rate_in: v[2], rate_out: v[3], waiting: v[4] };
+      });
+      const n = pts[pts.length - 1];
+      if (!hist[hist.length - 1].svc[env][svc]) return "";
+      const msgs = svc === "api"
+        ? `publica <b>${fmt(n.rate_in)}</b>/s`
+        : `entran <b>${fmt(n.rate_in)}</b>/s · salen <b>${fmt(n.rate_out)}</b>/s${n.waiting ? ` · <b>${n.waiting}</b> en espera` : ""}`;
+      return `<div class="chart"><h4><span>${esc(NAMES[svc])}</span><span>últimos ${span}</span></h4>
+        <div class="now">${fmt(n.cpu)} <small>% CPU · ${n.mem} MB</small></div>
+        ${spark(pts, [{ key: "cpu", color: "var(--accent)", label: "CPU" }], 10)}
+        <div class="sub">${msgs}</div>
+        ${spark(pts, series(svc), 1)}
+        <div class="legend">${series(svc).map(x => `<span><i style="background:${x.color}"></i>${x.label}</span>`).join("")}</div>
+      </div>`;
+    }).join("");
+  }
+
   function loadBanner(load) {
     if (!load) return "";
     const end = new Date(load.hasta);
     const left = (end - Date.now()) / 1000;
-    const what = load.modulo === "login" ? "del login (inicios de sesión y altas de persona)" : "del catálogo";
+    const what = load.modulo === "login" ? "del login (inicios de sesión y altas de persona)"
+      : load.modulo === "todos" ? "de todos los procesadores (personas, proveedores, espacios, productos y stock, recibos)"
+      : "del catálogo";
     const who = `${what} por <b>${esc(load.by)}</b>: ${esc(load.vus)} usuarios, ${esc(load.escrituras)} % escrituras`;
     const run = load.run_url ? ` <a href="${esc(load.run_url)}">Ver la ejecución</a>.` : "";
     if (left > 0) {
@@ -261,6 +300,9 @@
            <a href="${FORM}">Actions → probar ramas</a>.</div>`;
     document.getElementById("loadbanner").innerHTML = loadBanner(e.load);
     document.getElementById("charts").innerHTML = e.off ? "" : charts();
+    const p = e.off ? "" : pieces();
+    document.getElementById("pieces").innerHTML = p;
+    document.getElementById("piecesWrap").hidden = !p;
     document.getElementById("services").innerHTML = e.services
       .map(s => card(s, e.queues, meta?.branches?.[s.svc]?.branch)).join("");
     const groups = {};
